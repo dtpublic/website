@@ -1,0 +1,188 @@
+/*
+Theme Name: Data Torrent
+Description: Data Torrent 2016
+Author: Elevated.com
+Author URI: https://elevated.com
+Template: Avada
+Version: 1.0.0
+Text Domain:  Avada
+*/
+
+
+.close {
+    color: #000000;
+    float: right;
+    font-size: 21px;
+    font-weight: bold;
+    line-height: 1;
+    opacity: 0.2;
+    text-shadow: 0 1px 0 #FFFFFF;
+}
+.modal-open {
+    overflow: hidden;
+}
+.modal {
+    display: none;
+    overflow: auto;
+    overflow-y: scroll;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 99999;
+    -webkit-overflow-scrolling: touch;
+    outline: 0;
+}
+.modal.fade .modal-dialog {
+    -webkit-transform: translate(0, -25%);
+    transform: translate(0, -25%);
+    transition: -webkit-transform 0.3s ease-out;
+    transition: transform 0.3s ease-out;
+    transition: transform 0.3s ease-out, -webkit-transform 0.3s ease-out;
+}
+.modal.in .modal-dialog {
+    -webkit-transform: translate(0, 0);
+    transform: translate(0, 0);
+}
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 10px;
+}
+.modal-content {
+    position: relative;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    /* Fix to make border-radius work for transparent colors */
+    -moz-background-clip: padding;
+    -webkit-background-clip: padding-box;
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5);
+    background-clip: padding-box;
+    outline: none;
+}
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 99998;
+    background-color: #000000;
+}
+.modal-backdrop.fade {
+    opacity: 0;
+    filter: alpha(opacity=0);
+}
+.modal-backdrop.in {
+    opacity: 0.5;
+    filter: alpha(opacity=50);
+}
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e5e5;
+    min-height: 16.53846154px;
+}
+.modal-header .close {
+    margin-top: -2px;
+}
+.modal-title {
+    margin: 0;
+    line-height: 1.53846154;
+}
+.modal-body {
+    position: relative;
+    padding: 20px;
+}
+.modal-footer {
+    margin-top: 15px;
+    padding: 19px 20px 20px;
+    text-align: right;
+    border-top: 1px solid #e5e5e5;
+}
+.modal-footer .btn + .btn {
+    margin-left: 5px;
+    margin-bottom: 0;
+}
+.modal-footer .btn-group .btn + .btn {
+    margin-left: -1px;
+}
+.modal-footer .btn-block + .btn-block {
+    margin-left: 0;
+}
+@media (min-width: 900px) {
+    .modal-dialog {
+        width: 600px;
+        margin: 30px auto;
+    }
+    .modal-content {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    }
+    .modal-sm {
+        width: 300px;
+    }
+    .modal-lg {
+        width: 900px;
+    }
+}
+
+.modal-dialog {
+    margin-top: 60px;
+}
+.fusion-modal {
+    -webkit-overflow-scrolling: auto !important;
+}
+.fusion-modal .modal-header {
+    min-height: 54px;
+}
+.fusion-modal .close {
+    font-size: 30px;
+    margin-top: -5px;
+    text-shadow: none;
+}
+.fusion-modal .fusion-separator {
+    width: 100% !important;
+}
+
+/* to top */
+#toTop {
+    background-color: #333333;
+    border-radius: 4px 4px 0 0;
+    bottom: 0;
+    color: #FFFFFF;
+    display: none;
+    height: 35px;
+    position: fixed;
+    right: 30px;
+    text-align: center;
+    text-transform: uppercase;
+    width: 48px;
+    opacity: 0.9;
+    z-index: 10000;
+    transition: all 0.2s ease-in-out 0s;
+}
+.no-totop #toTop {
+    display: none !important;
+}
+#toTop:before {
+    line-height: 35px;
+    content: '\f106';
+    -webkit-font-smoothing: antialiased;
+    font-family: 'icomoon';
+    font-size: 22px;
+}
+#toTop:hover {
+    background-color: #A0CE4E;
+}
+#toTopHover {
+    display: block;
+    overflow: hidden;
+    float: left;
+    opacity: 0;
+}
+#toTop:active,
+#toTop:focus {
+    outline: none;
+    background-color: #333333;
+}
