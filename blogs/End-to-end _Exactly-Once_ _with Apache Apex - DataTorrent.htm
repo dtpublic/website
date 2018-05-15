@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<!-- saved from url=(0074)https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/ -->
+<html class="wf-ptsans-n4-active js wf-anticslab-n4-active wf-active ua-chrome ua-chrome-65 ua-chrome-65-0 ua-chrome-65-0-3325 ua-chrome-65-0-3325-181 ua-desktop ua-desktop-macintosh ua-mac_os_x ua-mac_os_x-10 ua-mac_os_x-10-13 ua-mac_os_x-10-13-3 ua-webkit ua-webkit-537 ua-webkit-537-36 js applicationcache geolocation history postmessage websockets localstorage sessionstorage websqldatabase webworkers hashchange audio canvas canvastext video webgl cssgradients multiplebgs opacity rgba inlinesvg hsla supports svgclippaths smil no-touchevents fontface generatedcontent textshadow indexeddb indexeddb-deletedatabase cssanimations backgroundsize borderimage borderradius boxshadow flexbox cssreflections csstransforms csstransforms3d csstransitions" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# og: http://ogp.me/ns#" data-useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36" style="overflow-y: auto;"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/p.js" async=""></script><script type="text/javascript" async="" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/insight.min.js"></script><script type="text/javascript" id="async-buttons" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/async-buttons.js"></script>
+    <!-- Google Tag Manager -->
+    <script type="text/javascript" async="" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/munchkin.js"></script><script type="text/javascript" async="" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/analytics.js"></script><script src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/webfont.js" type="text/javascript" async=""></script><script async="" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/gtm.js"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-TBBMZ7');</script>
+    <!-- End Google Tag Manager -->
+
+    <script type="text/javascript">
+        (function() {
+          var didInit = false;
+          function initMunchkin() {
+            if(didInit === false) {
+              didInit = true;
+              Munchkin.init('661-RYF-836');
+            }
+          }
+          var s = document.createElement('script');
+          s.type = 'text/javascript';
+          s.async = true;
+          s.src = '//munchkin.marketo.net/munchkin.js';
+          s.onreadystatechange = function() {
+            if (this.readyState == 'complete' || this.readyState == 'loaded') {
+              initMunchkin();
+            }
+          };
+          s.onload = initMunchkin;
+          document.getElementsByTagName('head')[0].appendChild(s);
+        })();
+    </script><script type="text/javascript" async="" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/munchkin(1).js"></script>
+    
+    
+    
+    <link rel="shortcut icon" href="https://www.datatorrent.com/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="https://www.datatorrent.com/favicon.ico" type="image/x-icon">
+
+    
+    <!--[if lte IE 8]>
+    <script type="text/javascript" src="https://www.datatorrent.com/wp-content/themes/Avada/assets/js/html5shiv.js"></script>
+    <![endif]-->
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>End-to-end "Exactly-Once" with Apache Apex - DataTorrent</title>
+						<script>
+							/* You can add more configuration options to webfontloader by previously defining the WebFontConfig with your options */
+							if ( typeof WebFontConfig === "undefined" ) {
+								WebFontConfig = new Object();
+							}
+							WebFontConfig['google'] = {families: ['Antic+Slab:400', 'PT+Sans:400']};
+
+							(function() {
+								var wf = document.createElement( 'script' );
+								wf.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1.5.3/webfont.js';
+								wf.type = 'text/javascript';
+								wf.async = 'true';
+								var s = document.getElementsByTagName( 'script' )[0];
+								s.parentNode.insertBefore( wf, s );
+							})();
+						</script>
+						
+<!-- This site is optimized with the Yoast SEO plugin v5.7.1 - https://yoast.com/wordpress/plugins/seo/ -->
+<link rel="canonical" href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="article">
+<meta property="og:title" content="End-to-end &quot;Exactly-Once&quot; with Apache Apex - DataTorrent">
+<meta property="og:description" content="Apache ® Apex (http://apex.incubator.apache.org/), a stream processing platform that is currently incubating at the Apache Software Foundation, helps you build processing pipelines with fault tolerance and strong processing guarantees. Apex’s architecture is equipped with the capability for low-latency processing, scalability, high availability, and operability. What’s more, the Apex Malhar operator library comes with a wide …">
+<meta property="og:url" content="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/">
+<meta property="og:site_name" content="DataTorrent">
+<meta property="article:section" content="Technical">
+<meta property="article:published_time" content="2016-03-03T19:09:08+00:00">
+<meta property="article:modified_time" content="2017-10-09T13:38:22+00:00">
+<meta property="og:updated_time" content="2017-10-09T13:38:22+00:00">
+<meta property="og:image" content="https://raw.githubusercontent.com/tweise/apex-samples/kafka-count-jdbc/exactly-once/docs/images/image01.png">
+<meta property="og:image:secure_url" content="https://raw.githubusercontent.com/tweise/apex-samples/kafka-count-jdbc/exactly-once/docs/images/image01.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/tweise/apex-samples/kafka-count-jdbc/exactly-once/docs/images/image00.png">
+<meta property="og:image:secure_url" content="https://raw.githubusercontent.com/tweise/apex-samples/kafka-count-jdbc/exactly-once/docs/images/image00.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/tweise/apex-samples/kafka-count-jdbc/exactly-once/docs/images/image02.png">
+<meta property="og:image:secure_url" content="https://raw.githubusercontent.com/tweise/apex-samples/kafka-count-jdbc/exactly-once/docs/images/image02.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:description" content="Apache ® Apex (http://apex.incubator.apache.org/), a stream processing platform that is currently incubating at the Apache Software Foundation, helps you build processing pipelines with fault tolerance and strong processing guarantees. Apex’s architecture is equipped with the capability for low-latency processing, scalability, high availability, and operability. What’s more, the Apex Malhar operator library comes with a wide […]">
+<meta name="twitter:title" content="End-to-end &quot;Exactly-Once&quot; with Apache Apex - DataTorrent">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/tweise/apex-samples/kafka-count-jdbc/exactly-once/docs/images/image01.png">
+<script type="application/ld+json">{"@context":"http:\/\/schema.org","@type":"WebSite","@id":"#website","url":"https:\/\/www.datatorrent.com\/","name":"DataTorrent","potentialAction":{"@type":"SearchAction","target":"https:\/\/www.datatorrent.com\/?s={search_term_string}","query-input":"required name=search_term_string"}}</script>
+<script type="application/ld+json">{"@context":"http:\/\/schema.org","@type":"Organization","url":"https:\/\/www.datatorrent.com\/blog\/end-to-end-exactly-once-with-apache-apex\/","sameAs":[],"@id":"#organization","name":"DataTorrent","logo":"https:\/\/www.datatorrent.com\/wp-content\/uploads\/2016\/11\/DataTorrentLogoWP.png"}</script>
+<!-- / Yoast SEO plugin. -->
+
+<link rel="dns-prefetch" href="https://s.w.org/">
+<link rel="alternate" type="application/rss+xml" title="DataTorrent » Feed" href="https://www.datatorrent.com/feed/">
+<link rel="alternate" type="application/rss+xml" title="DataTorrent » Comments Feed" href="https://www.datatorrent.com/comments/feed/">
+			<!-- For iPad Retina display -->
+			<link rel="apple-touch-icon-precomposed" sizes="144x144" href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/">
+		<link rel="alternate" type="application/rss+xml" title="DataTorrent » End-to-end “Exactly-Once” with Apache Apex Comments Feed" href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/feed/">
+
+		<meta property="og:title" content="End-to-end &quot;Exactly-Once&quot; with Apache Apex">
+		<meta property="og:type" content="article">
+		<meta property="og:url" content="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/">
+		<meta property="og:site_name" content="DataTorrent">
+		<meta property="og:description" content="Apache ® Apex (http://apex.incubator.apache.org/), a stream processing platform that is currently incubating at the Apache Software Foundation, helps you build processing pipelines with fault tolerance and strong processing guarantees. Apex&#39;s architecture is equipped with the capability for low-latency processing, scalability, high availability, and operability. What&#39;s more, the Apex Malhar operator library comes with a">
+
+				<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/www.datatorrent.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.9.2"}};
+			!function(a,b,c){function d(a,b){var c=String.fromCharCode;l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,a),0,0);var d=k.toDataURL();l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,b),0,0);var e=k.toDataURL();return d===e}function e(a){var b;if(!l||!l.fillText)return!1;switch(l.textBaseline="top",l.font="600 32px Arial",a){case"flag":return!(b=d([55356,56826,55356,56819],[55356,56826,8203,55356,56819]))&&(b=d([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]),!b);case"emoji":return b=d([55358,56794,8205,9794,65039],[55358,56794,8203,9794,65039]),!b}return!1}function f(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var g,h,i,j,k=b.createElement("canvas"),l=k.getContext&&k.getContext("2d");for(j=Array("flag","emoji"),c.supports={everything:!0,everythingExceptFlag:!0},i=0;i<j.length;i++)c.supports[j[i]]=e(j[i]),c.supports.everything=c.supports.everything&&c.supports[j[i]],"flag"!==j[i]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[j[i]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(h=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",h,!1),a.addEventListener("load",h,!1)):(a.attachEvent("onload",h),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),g=c.source||{},g.concatemoji?f(g.concatemoji):g.wpemoji&&g.twemoji&&(f(g.twemoji),f(g.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script><script src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/wp-emoji-release.min.js" type="text/javascript" defer=""></script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+<link rel="stylesheet" id="avada-stylesheet-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="avada-dynamic-css-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/avada-3232.css" type="text/css" media="all">
+<link rel="stylesheet" id="contact-form-7-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/styles.css" type="text/css" media="all">
+<link rel="stylesheet" id="stylesheet-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/styles(1).css" type="text/css" media="all">
+<link rel="stylesheet" id="dt-shortcodes-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/shortcodes.css" type="text/css" media="all">
+<link rel="stylesheet" id="dt-avadashortcodes-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/avada-shortcodes.css" type="text/css" media="all">
+<link rel="stylesheet" id="dt-avadastyles-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/avada-styles.css" type="text/css" media="all">
+<link rel="stylesheet" id="avada-parent-stylesheet-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/style(1).css" type="text/css" media="all">
+<link rel="stylesheet" id="fontawesome-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/font-awesome.css" type="text/css" media="all">
+<!--[if lte IE 9]>
+<link rel='stylesheet' id='avada-IE-fontawesome-css'  href='https://www.datatorrent.com/wp-content/themes/Avada/assets/fonts/fontawesome/font-awesome.css?ver=1.0.0' type='text/css' media='all' />
+<![endif]-->
+<!--[if lte IE 8]>
+<link rel='stylesheet' id='avada-IE8-css'  href='https://www.datatorrent.com/wp-content/themes/Avada/assets/css/ie8.css?ver=1.0.0' type='text/css' media='all' />
+<![endif]-->
+<!--[if IE]>
+<link rel='stylesheet' id='avada-IE-css'  href='https://www.datatorrent.com/wp-content/themes/Avada/assets/css/ie.css?ver=1.0.0' type='text/css' media='all' />
+<![endif]-->
+<link rel="stylesheet" id="avada-iLightbox-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/ilightbox.css" type="text/css" media="all">
+<link rel="stylesheet" id="avada-animations-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/animations.css" type="text/css" media="all">
+<link rel="stylesheet" id="A2A_SHARE_SAVE-css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/addtoany.min.css" type="text/css" media="all">
+<link rel="stylesheet" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/css"><script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/jquery.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/jquery-migrate.min.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/addtoany.min.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/jquery.matchHeight-min.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/fastclick.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/foundation.min.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/jquery.dotdotdot.min.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/jquery.sticky.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/lightslider.min.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/breakpoints.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/jquery.background-video.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/jquery.smooth-scroll.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/swiper.min.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/main.js"></script>
+<link rel="https://api.w.org/" href="https://www.datatorrent.com/wp-json/">
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://www.datatorrent.com/xmlrpc.php?rsd">
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://www.datatorrent.com/wp-includes/wlwmanifest.xml"> 
+<meta name="generator" content="WordPress 4.9.2">
+<link rel="shortlink" href="https://www.datatorrent.com/?p=3232">
+<link rel="alternate" type="application/json+oembed" href="https://www.datatorrent.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fend-to-end-exactly-once-with-apache-apex%2F">
+<link rel="alternate" type="text/xml+oembed" href="https://www.datatorrent.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fend-to-end-exactly-once-with-apache-apex%2F&amp;format=xml">
+
+<script type="text/javascript">
+var a2a_config=a2a_config||{};a2a_config.callbacks=a2a_config.callbacks||[];a2a_config.templates=a2a_config.templates||{};
+</script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/page.js" async="async"></script>
+<script type="text/javascript">
+	jQuery(document).ready(function(){
+		jQuery('img[usemap]').rwdImageMaps();
+	});
+</script>
+<style type="text/css">
+	img[usemap] { max-width: 100%; height: auto; }
+</style>
+<!--[if IE 9]> <script>var _fusionParallaxIE9 = true;</script> <![endif]-->
+    
+    <!--[if lte IE 8]>
+    <script type="text/javascript">
+        jQuery(document).ready(function () {
+            var imgs, i, w;
+            var imgs = document.getElementsByTagName('img');
+            for (i = 0; i < imgs.length; i++) {
+                w = imgs[i].getAttribute('width');
+                imgs[i].removeAttribute('width');
+                imgs[i].removeAttribute('height');
+            }
+        });
+    </script>
+
+    <script src="https://www.datatorrent.com/wp-content/themes/Avada/assets/js/excanvas.js"></script>
+
+    <![endif]-->
+
+    <!--[if lte IE 9]>
+    <script type="text/javascript">
+        jQuery(document).ready(function () {
+
+            // Combine inline styles for body tag
+            jQuery('body').each(function () {
+                var combined_styles = '<style type="text/css">';
+
+                jQuery(this).find('style').each(function () {
+                    combined_styles += jQuery(this).html();
+                    jQuery(this).remove();
+                });
+
+                combined_styles += '</style>';
+
+                jQuery(this).prepend(combined_styles);
+            });
+        });
+    </script>
+
+    <![endif]-->
+
+    <script type="text/javascript">
+        var doc = document.documentElement;
+        doc.setAttribute('data-useragent', navigator.userAgent);
+    </script>
+
+    
+    <meta class="foundation-mq"><link rel="stylesheet" type="text/css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/buttons-secure.css"><iframe id="stSegmentFrame" name="stSegmentFrame" frameborder="0" scrolling="no" width="0px" height="0px" sandbox="allow-scripts allow-same-origin" style="display:none;" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/saved_resource.html"></iframe><style id="fit-vids-style">.fluid-width-video-wrapper{width:100%;position:relative;padding:0;}.fluid-width-video-wrapper iframe,.fluid-width-video-wrapper object,.fluid-width-video-wrapper embed {position:absolute;top:0;left:0;width:100%;height:100%;}</style><link id="mktoForms2BaseStyle" rel="stylesheet" type="text/css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/forms2.css"><link id="mktoForms2ThemeStyle" rel="stylesheet" type="text/css" href="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/forms2-theme-simple.css"></head>
+
+
+<body class="post-template-default single single-post postid-3232 single-format-standard fusion-body no-tablet-sticky-header no-mobile-sticky-header no-mobile-slidingbar no-mobile-totop mobile-logo-pos-left layout-wide-mode has-sidebar menu-text-align-center mobile-menu-design-modern fusion-image-hovers fusion-show-pagination-text do-animate breakpoint-1024" style="">
+<!-- Google Tag Manager (noscript) -->
+<noscript>&lt;iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TBBMZ7"
+                  height="0" width="0" style="display:none;visibility:hidden"&gt;&lt;/iframe&gt;</noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+
+
+
+
+<!--
+`````````````````````````````````````````````
+`````````````````````````````````````````````
+````````````````````````````````````````````` NAV -->
+<nav class="nav clearfix">
+
+    <!-- MAIN NAV -->
+    <div class="nav__main-nav">
+        <!-- MOBILE BAR -->
+        <div class="nav__mobile-bar clearfix">
+            <!-- SEARCH -->
+            <div class="nav__mobile-search">
+                <a data-open="nav__search" aria-controls="nav__search" id="hdvafu-reveal" aria-haspopup="true" tabindex="0"><i class="fa fa-search" aria-hidden="true"></i></a>
+            </div>
+
+            <!-- LOGO -->
+            <div class="nav__mobile-logo">
+                <a href="https://www.datatorrent.com/"><img src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/logo_datatorrent.png" width="100%" height="100%" class="nav__logo"></a>
+            </div>
+
+            <!-- HAMBURGER MENU -->
+            <div class="title-bar" data-responsive-toggle="main-menu" data-hide-for="medium" style="display: none;">
+                <button class="menu-icon" type="button" data-toggle=""></button>
+            </div>
+        </div>
+
+        <!-- NAV MENU CONTAINER -->
+        <div class="nav__menu-container">
+            <!-- MAIN NAV -->
+            <div class="top-bar" id="main-menu">
+                <ul class="horizontal menu nav__menu dropdown" data-hover-delay="0" data-closing-time="0" data-responsive-menu="drilldown medium-dropdown" data-back-button="&lt;li class=&quot;js-drilldown-back&quot;&gt;&lt;a tabindex=&quot;0&quot;&gt;Main Menu&lt;/a&gt;&lt;/li&gt;" role="menubar" data-dropdown-menu="r34qi8-dropdown-menu">
+                    <!-- PRODUCTS AND SERVICES -->
+                    <li class="nav__menu-item is-dropdown-submenu-parent opens-right" role="menuitem" aria-haspopup="true" aria-expanded="false" aria-label="Products">
+                        <a href="https://www.datatorrent.com/products-services" tabindex="0">Products</a>
+                        <ul class="vertical menu nav__submenu submenu is-dropdown-submenu first-sub" data-submenu="" aria-hidden="true" role="menu">
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item">
+                                <a href="https://www.datatorrent.com/products-services/benefits/" class="nav__menu-mega-link">6 Reasons Why DataTorrent</a>
+                                <a href="https://www.datatorrent.com/products-services/datatorrent-rts/" class="nav__menu-mega-link">DataTorrent RTS</a>
+                                <a href="https://www.datatorrent.com/appfactory/" class="nav__menu-mega-link">AppFactory</a>
+                                <a href="https://www.datatorrent.com/products-services/architecture/" class="nav__menu-mega-link">Architecture</a>
+                                <a href="https://www.datatorrent.com/products-services/apache-apex/" class="nav__menu-mega-link">Apache Apex</a>
+                                <!--<a href="/products-services/deployment-modes/" class="nav__menu-mega-link">Deployment Modes</a>-->
+                            </li>
+                        </ul>
+                    </li>
+                    <!-- SOLUTIONS -->
+                    <!--<li class="nav__menu-item">
+                        <a href="/solutions">Solutions</a>
+                        <ul class="vertical menu nav__submenu">
+                            <li>
+                                <a href="#" class="nav__submenu-link">Use Cases</a>
+                                <ul class="vertical menu nav__thirdmenu">
+                                    <li><a href="/solutions/use-case/complex-data-replication/" class="nav__submenu-link">Complex Data Replication</a></li>
+                                    <li><a href="/solutions/use-case/data-ingestion/" class="nav__submenu-link">Data Ingestion</a></li>
+                                    <li><a href="/solutions/use-case/data-preparation/" class="nav__submenu-link">Data Preparation</a></li>
+                                    <li><a href="/solutions/use-case/dimensional-compute/" class="nav__submenu-link">Dimensional Compute</a></li>
+                                    <li><a href="/solutions/use-case/oltp-data-streaming/" class="nav__submenu-link">OLTP Data Streaming</a></li>
+                                    <li><a href="/solutions/use-case/streaming-with-five-9s-availability/" class="nav__submenu-link">Streaming with Five 9s Availability</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#" class="nav__submenu-link">Industry</a>
+                                <ul class="vertical menu nav__thirdmenu">
+                                    <li><a href="/solutions/industry-page/advertising-technology/" class="nav__submenu-link">Advertising Technology</a></li>
+                                    <li><a href="/solutions/industry-page/energy-and-utilities/" class="nav__submenu-link">Energy and Utilities</a></li>
+                                    <li><a href="/solutions/industry-page/financial-services/" class="nav__submenu-link">Financial Services</a></li>
+                                    <li><a href="/solutions/industry-page/healthcare/" class="nav__submenu-link">Healthcare</a></li>
+                                    <li><a href="/solutions/industry-page/internet-of-things-iot/" class="nav__submenu-link">Internet of Things (IoT)</a></li>
+                                    <li><a href="/solutions/industry-page/oil-gas/" class="nav__submenu-link">Oil &amp; Gas</a></li>
+                                    <li><a href="/solutions/industry-page/retail-ecommerce/" class="nav__submenu-link">Retail &amp; eCommerce</a></li>
+                                    <li><a href="/solutions/industry-page/security-intelligence/" class="nav__submenu-link">Security &amp; Intelligence</a></li>
+                                    <li><a href="/solutions/industry-page/telecommunications/" class="nav__submenu-link">Telecommunications</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>-->
+                    
+                    <!-- CUSTOMERS -->
+                    <li class="nav__menu-item" role="menuitem">
+                        <a href="https://www.datatorrent.com/customers/">Customers</a>
+                    </li>
+                    <!-- GET ENGAGED -->
+                    <li class="nav__menu-item is-dropdown-submenu-parent opens-right" role="menuitem" aria-haspopup="true" aria-expanded="false" aria-label="Get Engaged">
+                        <a href="https://www.datatorrent.com/contact-us">Get Engaged</a>
+                        <ul class="vertical menu nav__submenu submenu is-dropdown-submenu first-sub" data-submenu="" aria-hidden="true" role="menu">
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/jumpstart/" class="nav__submenu-link">JumpStart</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/contact-us/" class="nav__submenu-link">Contact Us</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/request-a-demo/" class="nav__submenu-link">Request a Demo</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/download/" class="nav__submenu-link">Download RTS</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="http://apex.apache.org/downloads.html" class="nav__submenu-link">Download Apex</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/support/" class="nav__submenu-link">Get Support</a></li>
+                            <!--<li><a href="/products-services/start-up-accelerator/" class="nav__submenu-link">Startup Accelerator</a></li>-->
+                            <!--<li><a href="/university-incubator/" class="nav__submenu-link">University Incubator</a></li>-->
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/company/partners/" class="nav__submenu-link">Become A Partner</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/products-services/professional-services/" class="nav__submenu-link">Professional Services</a></li>
+                            <!--<li><a href="/university/" class="nav__submenu-link">Get Training</a></li>-->
+                        </ul>
+                    </li>
+
+                     <!-- MORE -->
+                    <li class="nav__menu-item is-dropdown-submenu-parent opens-right" role="menuitem" aria-haspopup="true" aria-expanded="false" aria-label="More">
+                        <a href="https://www.datatorrent.com/company/about-us/">More</a>
+                        <ul class="vertical menu nav__submenu submenu is-dropdown-submenu first-sub" data-submenu="" aria-hidden="true" role="menu">
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/company/about-us/" class="nav__submenu-link">About Us</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/news/" class="nav__submenu-link">In the News</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/blog/" class="nav__submenu-link">Blogs</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/events/" class="nav__submenu-link">Events</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/resources/" class="nav__submenu-link">Resources</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/company/why-datatorrent/" class="nav__submenu-link">Why DataTorrent</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/growth/" class="nav__submenu-link" target="_blank">Momentum</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/company/careers/" class="nav__submenu-link">Careers</a></li>
+                            <!--<li><a href="/company/team/" class="nav__submenu-link">Team</a></li>-->
+                        </ul>
+                    </li>
+
+                    <!-- SEARCH ICON -->
+                    <li class="nav__menu-item" role="menuitem"><a data-open="nav__search" aria-controls="nav__search" id="hdvafu-reveal" aria-haspopup="true" tabindex="0"><i class="fa fa-search" aria-hidden="true"></i></a></li>
+                    <!-- MODAL -->
+                    
+                    <li role="menuitem"><a href="https://www.datatorrent.com/download/" class="btn btn--green nav__btn">Download Now</a></li>
+                </ul>
+            </div>
+            <!-- /top bar -->
+        </div>
+        <!-- /menu container -->
+    </div>
+    <!-- /main nav -->
+</nav>
+<div class="sticky-header-target"></div>
+<!--
+`````````````````````````````````````````````
+`````````````````````````````````````````````
+````````````````````````````````````````````` END NAV -->
+
+
+
+<!--
+`````````````````````````````````````````````
+`````````````````````````````````````````````
+````````````````````````````````````````````` STICKY HEADER -->
+<div style="position: relative;">
+<div class="sticky-header clearfix" style="display: none;">
+    <!-- left -->
+    <div class="sticky-header__left">
+        <a href="https://www.datatorrent.com/"><img src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/logo_datatorrent.png" width="100%" height="100%" class="nav__logo"></a>
+    </div>
+    <!-- right -->
+    <div class="sticky-header__right">
+        <a href="https://www.datatorrent.com/download/" class="btn btn--green nav__btn">Download Now</a>
+    </div>
+</div>
+</div>
+<!--
+`````````````````````````````````````````````
+`````````````````````````````````````````````
+````````````````````````````````````````````` /STICKY HEADER -->
+
+
+
+<div class="fusion-row" style=""> <div id="" class="topper " style="background: url(&quot;/wp-content/uploads/2017/08/header-black.jpg&quot;) center center / cover no-repeat; position: relative; overflow: hidden;"> 
+   <video class="jquery-background-video" muted="" loop="" poster="/wp-content/uploads/2017/08/header-black.jpg" style="min-width: auto; min-height: auto; width: 1200px; height: auto; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); transition-duration: 2000ms;">
+     <source src="no" type="video/mp4"> 
+   </video> 
+   <div class="relative"> 
+<!-- BANNER --> 
+<div class="topper__banner topper__banner--xs"> 
+    <!-- h1 --> 
+    <h1 class="heading--1" style="color: #ffffff; font-size: !important;" data-fontsize="70" data-lineheight="84">The DataTorrent Blog</h1> 
+    <!-- category --> 
+</div> 
+<!-- STICKY NAV --> 
+<ul class="topper__underline-nav topper__underline-nav--6 clearfix green "> 
+ <li><a href="https://www.datatorrent.com/documents/" class="topper__underline-nav-item">Documents</a></li> 
+ <li><a href="https://www.datatorrent.com/videos/" class="topper__underline-nav-item">Videos</a></li> 
+ <li><a href="https://www.datatorrent.com/webinars/" class="topper__underline-nav-item">Webinars</a></li> 
+ <li><a href="https://www.datatorrent.com/events/" class="topper__underline-nav-item">Events</a></li> 
+ <li><a href="https://www.datatorrent.com/blog/" class="topper__underline-nav-item">Blogs</a></li> 
+ <li><a href="https://www.datatorrent.com/product-documentation/" class="topper__underline-nav-item">Product Docs</a></li> 
+</ul> 
+</div> 
+<button class="jquery-background-video-pauseplay pause" style="left: auto; right: 15px; top: 15px; bottom: auto;"><span>Pause</span></button></div> 
+<div class="clearfix dt-list-page">
+    <div class="padding padding--tb-sm fusion-clearfix">
+
+        <div id="content" style="float: left;">
+
+                            <div class="single-navigation clearfix">
+                    <a href="https://www.datatorrent.com/blog/blog-implementing-linear-road-benchmark-in-apex/" rel="prev">Previous</a>                    <a href="https://www.datatorrent.com/blog/latency-calculation-in-apache-apex/" rel="next">Next</a>                </div>
+            
+                            <div id="post-3232" class="post post-3232 type-post status-publish format-standard has-post-thumbnail hentry category-technical">
+                                        
+                                                                                                                                        <div class="fusion-flexslider flexslider post-slideshow fusion-post-slideshow">
+                                    <ul class="slides">
+                                                                                                                                                                                                                                                                <li class="flex-active-slide" style="width: 100%; float: left; margin-right: -100%; position: relative; opacity: 1; display: block; z-index: 2;">
+                                                                                                    <a href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/" data-rel="iLightbox[gallery3232]" title="" data-title="" data-caption="" class="fusion-no-lightbox">
+                                                        <span class="screen-reader-text">View Larger Image</span>
+                                                                                                            </a>
+                                                                                            </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </ul>
+                                <ol class="flex-control-nav flex-control-paging"></ol><ul class="flex-direction-nav"><li><a class="flex-prev flex-disabled" href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/#" tabindex="-1"></a></li><li><a class="flex-next flex-disabled" href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/#" tabindex="-1"></a></li></ul></div>
+                                                                                                        
+                                            <h2 class="entry-title" data-fontsize="30" data-lineheight="36">End-to-end “Exactly-Once” with Apache Apex</h2>                                        <div class="post-content">
+                        <p>Apache ® Apex (<a href="http://apex.incubator.apache.org/">http://apex.incubator.apache.org/</a>), a stream processing platform that is currently incubating at the Apache Software Foundation, helps you build processing pipelines with fault tolerance and strong processing guarantees. Apex’s architecture is equipped with the capability for low-latency processing, scalability, high availability, and operability. What’s more, the Apex Malhar operator library comes with a wide range of connectors for out-of-the-box integration with your existing infrastructure to consume data from and land the processing results.</p>
+<p>One of the strong points of Apex is fault tolerance. Apex guarantees no loss of data and computational state. In the event of failure, automatic recovery will ensure that processing resumes from where it left off. Processing guarantees in stream processing systems are frequently discussed and compared. The predominant focus is on the platform in isolation and does not take into account interaction with external systems. While the stream processing platform should provide guarantees for data reliability, it cannot by itself provide a guarantee like exactly-once when external systems are involved. However, such interaction is rather the norm in real world applications.</p>
+<p>Apex can deliver exactly-once semantics through the connectors, working in conjunction with the engine. Let’s see how this works, based on a typical integration scenario, and using connectors that are readily available in the operator library.</p>
+<h2 id="example-topology" data-fontsize="20" data-lineheight="24">Example topology</h2>
+<p>Apex applications are specified as <a href="https://www.datatorrent.com/blog/tracing-dags-from-specification-to-execution/">Directed Acyclic Graphs or DAGs</a>. DAGs express processing logic using operators (vertices) and streams (edges), thereby providing a way to describe complex logic for sequential or parallel execution and breaking up the application logic into smaller functional components. The example scenario, expanding on word count, will use the favorite <a href="https://www.datatorrent.com/blog-read-with-kafka">connector to read from Apache Kafka</a>, perform the aggregation (stateful operation) and write the results to a database, using JDBC. The diagram shows logical and physical view, with color coding for processes that are distributed in the cluster:</p>
+<p><img src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/image01.png" alt="" title=""></p>
+<p>The “kafkaInput”  operator has multiple partitions, each of which can consume from one or multiple Kafka partitions that are distributed across the different brokers (the partitioning in Apex is automatic). You can also see a shuffle to the count operator with 4 partitions, and a unifier for the count, which brings together the output of multiple partitions for downstream processing.</p>
+<p>Since it is a streaming source, the data flow is unbounded. However, we would like to periodically see the aggregate count. Apex supports the concept of an application window where operators have the option of performing certain operations periodically apart from the normal processing of data. In this case, the count operator will aggregate over a window, retain the aggregates as state for the duration of the window, emit them at the end of the window and clear the state.</p>
+<p>The store operator will write the aggregates it receives to the database. Let us further assume that it is very important that we count “exactly-once” . That means, do not miss words and do not double count in case there are failures during processing. This requirement is essential for many use cases and most obvious when counting money, such as billing and payment processing. The DAG expressed in Java looks like this:</p>
+<pre class="prettyprint"><code class="language-java hljs "><span class="hljs-annotation">@Override</span>
+<span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">populateDAG</span>(DAG dag, Configuration conf)
+{
+  KafkaSinglePortStringInputOperator kafkaInput = dag.addOperator(<span class="hljs-string">"kafkaInput"</span>, <span class="hljs-keyword">new</span> KafkaSinglePortStringInputOperator());
+  kafkaInput.setIdempotentStorageManager(<span class="hljs-keyword">new</span> IdempotentStorageManager.FSIdempotentStorageManager());
+  UniqueCounterFlat count = dag.addOperator(<span class="hljs-string">"count"</span>, <span class="hljs-keyword">new</span> UniqueCounterFlat());
+  CountStoreOperator store = dag.addOperator(<span class="hljs-string">"store"</span>, <span class="hljs-keyword">new</span> CountStoreOperator());
+  store.setStore(<span class="hljs-keyword">new</span> JdbcTransactionalStore());
+  dag.addStream(<span class="hljs-string">"words"</span>, kafkaInput.outputPort, count.data);
+  dag.addStream(<span class="hljs-string">"counts"</span>, count.counts, store.input);
+}</code></pre>
+<p>
+</p><p>You can find the source code as a Maven project <a href="https://github.com/tweise/apex-samples/blob/master/exactly-once/src/main/java/com/example/myapexapp/Application.java">here</a>. It will also demonstrate how the functionality including external system interactions like Kafka and hsqldb can be exercised with embedded mode in a unit test, without manual setup. Let’s have a closer look at how “exactly-once”  works in this scenario and which component contributes what. </p>
+<h2 id="state-in-the-operator" data-fontsize="20" data-lineheight="24">State in the operator</h2>
+<p>Apex connectors that retrieve data from an external system need to ensure they can recover the input in the event of failure. This means rewinding the stream and replaying data from the source that wasn’t fully processed. The capabilities of the external system determine how complex such recovery is. Kafka already handles message persistence and, just like when reading from files, allows for replaying the message stream directly. What remains is for the Apex input operator to remember the offsets. Compare, for example, to JMS, and the operator has to do a lot of juggling to write messages to a log that can be used for recovery, prior to “acknowledgment” . It’s not easy to implement and also not efficient.</p>
+<p>Likewise, there is some work the operator writing to an external system needs to do. Again, the exact mechanism will depend on the external system. In this case, we utilize the transaction support of the database. The last processed window id is stored along with the application data modified in the window. On recovery and replay, it can be used to detect what was already processed and skip instead of writing duplicates. This technique permits to make results available in the database with minimized latency. It requires idempotency, the guarantee that events are always delivered in the same window on replay, provided by Apex.</p>
+<h2 id="platform-support" data-fontsize="20" data-lineheight="24">Platform support</h2>
+<p>The Apex engine enables stateful fault tolerance. This means all state, including the state of the master (or controller), the state of operators (the units processing the streams) as well as the data in motion can be recovered. Recovery of any failed component is automatic. Apex also supports stateful restart of an application from its previous state. That’s useful in cases where the Hadoop cluster needs to be brought down for maintenance or upgrades or the application needs modifications that cannot be performed on the fly. Read more about Apex high-availability <a href="https://www.datatorrent.com/efficient-ha-the-lunch-test/">here</a>.</p>
+<h2 id="checkpointing" data-fontsize="20" data-lineheight="24">Checkpointing</h2>
+<p>To be able to recover the state of an operator, it needs to be saved or <a href="https://www.datatorrent.com/blog-introduction-to-checkpoint/">checkpointed</a>. In Apex, this is done through a pluggable mechanism which by default serializes the operator state and saves it to the Hadoop file system. These checkpoints are performed periodically and automatically. Compared to in-memory processing checkpointing is an expensive operation and the interval between checkpoints is chosen to represent a balance between performance and speed of recovery. The interval is configurable and the storage for the checkpointed state customizable, thereby allowing applications that are especially performance sensitive to, for example, use a distributed in-memory store for checkpointing.</p>
+<p>To achieve scalability and fault tolerance, Apex will checkpoint the operator state at a “window boundary” . Think of it as a marker in the event stream. The stream is a sequence of tuples, sliced into “streaming windows” . User code processes each tuple as it arrives without having to wait for a window boundary; these boundaries present the opportunity for both, user code (for example aggregation) and the engine (in this example checkpointing) to perform additional operations. Since window boundaries are identifiable and propagated through all streams in the topology, they can be used to checkpoint a consistent distributed state for the entire DAG in a decentralized, asynchronous manner.</p>
+<p><img src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/image00.png" alt="" title=""></p>
+<h2 id="exactly-once-processing" data-fontsize="20" data-lineheight="24">“Exactly-Once”  processing</h2>
+<p>Apex, through the combined capabilities of engine and connector implementation, can guarantee processing without loss of data or duplicates with respect to external systems. Even though there is no such thing as strict exactly-once in the distributed system, the equivalent end effect can be derived from the consistent state across all operators of the application provided by checkpointing, plus ability to replay the portion of the stream that was not yet reflected in a checkpoint (at-least-once  processing mode) and idempotency (recompute leading to the same result). </p>
+<p>For the Kafka input operator to support this, it needs to remember which events were consumed in which window to be able to replay and allow downstream processing to recompute the streaming windows in the same order when a rewind of the stream occurs after recovery. Kafka preserves the data and the operator tracks the offset ranges.</p>
+<p>The processing guarantee applies to the word counts, stored in a database, updated after every window. We want to make sure that we count every event, which can be covered with at-least-once guarantee, but also not double count. In this example, the JDBC output operator will, as part of every transaction that updates the word counts, also record the last processed window in an extra metadata table. By comparing the current window ID with the one last stored, the operator will know whether the update already happened or not. Remember that works because on replay, the events are presented in the same order and window sequence, guaranteed by input operator and engine.</p>
+<p>The concept of the streaming window also enables efficiency: Multiple updates to the database can be batched and committed as larger transaction and aggregation at the window boundary reduces data sent through the stream and thus the number of database updates. Using the JDBC connector from Malhar, the code for updating the word count is straightforward:</p>
+<pre class="prettyprint"><code class="language-java hljs "><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CountStoreOperator</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">AbstractJdbcTransactionableOutputOperator</span>&lt;<span class="hljs-title">KeyValPair</span>&lt;<span class="hljs-title">String</span>, <span class="hljs-title">Integer</span>&gt;&gt;
+{</span>
+  <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> String SQL =
+      <span class="hljs-string">"MERGE INTO words USING (VALUES ?, ?) I (word, wcount)"</span>
+      + <span class="hljs-string">" ON (words.word=I.word)"</span>
+      + <span class="hljs-string">" WHEN MATCHED THEN UPDATE SET words.wcount = words.wcount + I.wcount"</span>
+      + <span class="hljs-string">" WHEN NOT MATCHED THEN INSERT (word, wcount) VALUES (I.word, I.wcount)"</span>;
+
+  <span class="hljs-annotation">@Override</span>
+  <span class="hljs-keyword">protected</span> String <span class="hljs-title">getUpdateCommand</span>()
+  {
+    <span class="hljs-keyword">return</span> SQL;
+  }
+
+  <span class="hljs-annotation">@Override</span>
+  <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">setStatementParameters</span>(PreparedStatement statement, KeyValPair&lt;String, Integer&gt; tuple) <span class="hljs-keyword">throws</span> SQLException
+  {
+    statement.setString(<span class="hljs-number">1</span>, tuple.getKey());
+    statement.setInt(<span class="hljs-number">2</span>, tuple.getValue());
+  }
+}</code></pre>
+<p>
+</p><p>Let’s consider how idempotency is necessary to ensure exactly-once semantics with respect to the database output in the event of failure and replay. The Kafka consumer by itself is aware of the offset, but not the Apex window boundary and therefore not idempotent. The following example will show how the words are emitted within windows by the Kafka input operator and how the window boundary can change the computed results, when not idempotent: </p>
+<p><img src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/image02.png" alt="" title=""></p>
+<p>Checkpoints occur every 2 windows. The input operator emits 2 tuples per window and fails in the second window (before checkpointing again). At that time, the count as of the first window was committed to the database. Upon recovery, the input operator will be reset to the checkpoint before window 1 and both windows replay. The count for window 1 is now ignored since it was recorded as the last processed window before the failure. The remaining rows in the table show how the correctness of the result depends on idempotency of the input operator, i.e. the events must be emitted in the same windows or it can lead to incorrect total (5) stored in the database.</p>
+<p>An alternative approach is to defer any effect on external systems until the window is “committed” , which means it has been checkpointed throughout the entire topology and there is no possibility it will be recomputed due to replay. For this, the engine provides the <code>committed</code> callback in <code>CheckpointListener</code> that allows each operator to know the latest final window id. The operator developer can use it as the trigger to finalize state, for example by doing an atomic rename on files (which is how the Apex Malhar <code>FileOutputOperator</code> is fault tolerant with no duplication). Compared to the idempotent input operator, this approach introduces a delay before results become visible and increases the end to end latency.</p>
+<h2 id="idempotency-and-kafka-offset" data-fontsize="20" data-lineheight="24">Idempotency and Kafka Offset</h2>
+<p>The Apex Kafka input operator uses SimpleConsumer and, therefore, tracks the offset for each partition. To achieve idempotency, input operators need to remember which events were received and emitted into the topology for each streaming window until those windows are committed and the associated state is no longer required for recovery. The Kafka input operator supports idempotency (as an option). When enabled, the offset for every window will be recorded to durable storage (HDFS by default) at the end of each window. The associated state is a set of (window, offset) pairs. In case of recovery, it will rewind and replay the windows in the <em>same</em> sequence and the <em>same</em> per-window content as before. Unlike with other sources that will require the receiver to temporarily backup the data for fault tolerance, Kafka maintains the data and the consumer only needs to track the offsets.</p>
+<h2 id="simplified-kafka-09-integration" data-fontsize="20" data-lineheight="24">Simplified Kafka 0.9 integration</h2>
+<p>The Apex Kafka input and output operators work with Kafka 0.8.x. The recent release of Apex Malhar 3.3.0 added support for the new Kafka 0.9 consumer API with a new input operator implementation (0.8.x continues to be supported).</p>
+<p>The 0.8.x API had simple and high-level consumers. The Apex connector was using the simple consumer API as it provided the explicit offset control that is required for the Apex processing guarantees. The new unified consumer API provides all the controls we previously used in an easier and more intuitive fashion. The Kafka client no longer needs to deal with <strong>ZooKeeper</strong>.</p>
+<p>Offset tracking is now directly supported in the API. In the Apex operator, it is used to periodically store the last processed offset for future cold restart (offsets are otherwise checkpointed with the operator for recovery). The possible choices for initial offset are earliest, latest, or continue from most recently consumed offset. With <code>SimpleConsumer</code>, this required custom coding and even more so prior to topic offset storage in 0.8.2.</p>
+<p>The new API also reduces the number of consumer threads: Previously we needed one thread per broker. Now a single thread for all partitions across brokers is adequate. In most cases, a single instance of the Apex <code>KafkaInputOperator</code> will consume multiple partitions. Previously this required a consumer thread for each broker and, therefore, extra resources that were not utilized with larger clusters. With 0.9, a single thread can handle partitions from multiple brokers.</p>
+<p>The new API simplifies the Apex operator implementation and much of the code that was needed earlier to work with <code>SimpleConsumer</code> is no longer needed. For example, detection of connection failure and failover to the new lead broker is now handled by the Kafka API. Before, metadata monitoring and reconnect had to be implemented in user land. Finally, offset commit is now available as part of the consumer API and obsoletes the need for an extra component dedicated to store offsets for a cold restart.</p>
+<h2 id="in-a-nutshell" data-fontsize="20" data-lineheight="24">In a nutshell</h2>
+<p>Apache Apex is the foundation for fully fault tolerant stream processing. It has a library of connectors that cover many common integration scenarios. End to end “exactly once”  is the combination of at-least-once semantics, idempotent processing, and state checkpointing. The <a href="https://github.com/tweise/apex-samples/tree/master/exactly-once">Kafka to JDBC example</a> shows how the above is achieved through:</p>
+<ol>
+<li>Window ID to Kafka offset range mapping logged in HDFS to achieve idempotency</li>
+<li>Metadata table to store committed window in the database</li>
+<li>JDBC transaction to make the writes of application data and metadata atomic</li>
+</ol>
+<p>The user does not have to implement any of it, it’s provided by Apex. Future blogs will cover additional scenarios with different input sources and destinations for the processing results, so stay tuned!</p>
+                                            </div>
+
+                    
+                           
+
+                        <div class="fusion-meta-info"><div class="fusion-meta-info-wrapper"><div class="blog-author-single">Thomas Weise&nbsp;|&nbsp;</div>
+	
+			<span class="vcard" style="display: none;">
+			<span class="fn">
+				<a href="https://www.datatorrent.com/blog/author/michelle/" title="Posts by michelle" rel="author">michelle</a>			</span>
+		</span>
+	
+	
+
+	
+	
+			<span class="updated" style="display:none;">
+			2017-10-09T13:38:22+00:00		</span>
+	
+<span>March 3rd, 2016</span><span class="fusion-inline-sep">|</span><a href="https://www.datatorrent.com/blog/category/technical/" rel="category tag">Technical</a><span class="fusion-inline-sep">|</span><span class="fusion-comments"><a href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/#comments">1 Comment</a></span></div></div>                        			<div class="fusion-sharing-box fusion-single-sharing-box share-box">
+				<h4 data-fontsize="13" data-lineheight="19">Share This Story, Choose Your Platform!</h4>
+				<div class="fusion-social-networks"><div class="fusion-social-networks-wrapper"><a class="fusion-social-network-icon fusion-tooltip fusion-facebook fusion-icon-facebook" style="color:#bebdbd;" href="http://www.facebook.com/sharer.php?m2w&amp;s=100&amp;p[url]=https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/&amp;p[images][0]=&amp;p[title]=End-to-end%20%26%238220%3BExactly-Once%26%238221%3B%20%C2%9Dwith%20Apache%20Apex" target="_blank" data-placement="top" data-title="Facebook" data-toggle="tooltip" title="" data-original-title="Facebook"><span class="screen-reader-text">Facebook</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-twitter fusion-icon-twitter" style="color:#bebdbd;" href="https://twitter.com/share?text=End-to-end%20%E2%80%9CExactly-Once%E2%80%9D%20%C2%9Dwith%20Apache%20Apex&amp;url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fend-to-end-exactly-once-with-apache-apex%2F" target="_blank" data-placement="top" data-title="Twitter" data-toggle="tooltip" title="" data-original-title="Twitter"><span class="screen-reader-text">Twitter</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-linkedin fusion-icon-linkedin" style="color:#bebdbd;" href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/&amp;title=End-to-end%20%26%238220%3BExactly-Once%26%238221%3B%20%C2%9Dwith%20Apache%20Apex&amp;summary=Apache%20%C2%AE%20Apex%20%28http%3A%2F%2Fapex.incubator.apache.org%2F%29%2C%20a%20stream%20processing%20platform%20that%20is%20currently%20incubating%20at%20the%20Apache%20Software%20Foundation%2C%20helps%20you%20build%20processing%20pipelines%20with%20fault%20tolerance%20and%20strong%20processing%20guarantees.%20Apex%26%2339%3Bs%20architecture%20is%20equipped%20with%20the%20capability%20for%20low-latency%20processing%2C%20scalability%2C%20high%20availability%2C%20and%20operability.%20What%26%2339%3Bs%20more%2C%20the%20Apex%20Malhar%20operator%20library%20comes%20with%20a" target="_blank" data-placement="top" data-title="Linkedin" data-toggle="tooltip" title="" data-original-title="Linkedin"><span class="screen-reader-text">Linkedin</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-reddit fusion-icon-reddit" style="color:#bebdbd;" href="http://reddit.com/submit?url=https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/&amp;title=End-to-end%20%26%238220%3BExactly-Once%26%238221%3B%20%C2%9Dwith%20Apache%20Apex" target="_blank" data-placement="top" data-title="Reddit" data-toggle="tooltip" title="" data-original-title="Reddit"><span class="screen-reader-text">Reddit</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-tumblr fusion-icon-tumblr" style="color:#bebdbd;" href="http://www.tumblr.com/share/link?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fend-to-end-exactly-once-with-apache-apex%2F&amp;name=End-to-end%20%26%238220%3BExactly-Once%26%238221%3B%20%C2%9Dwith%20Apache%20Apex&amp;description=Apache%20%C2%AE%20Apex%20%28http%3A%2F%2Fapex.incubator.apache.org%2F%29%2C%20a%20stream%20processing%20platform%20that%20is%20currently%20incubating%20at%20the%20Apache%20Software%20Foundation%2C%20helps%20you%20build%20processing%20pipelines%20with%20fault%20tolerance%20and%20strong%20processing%20guarantees.%20Apex%26%2339%3Bs%20architecture%20is%20equipped%20with%20the%20capability%20for%20low-latency%20processing%2C%20scalability%2C%20high%20availability%2C%20and%20operability.%20What%26%2339%3Bs%20more%2C%20the%20Apex%20Malhar%20operator%20library%20comes%20with%20a" target="_blank" data-placement="top" data-title="Tumblr" data-toggle="tooltip" title="" data-original-title="Tumblr"><span class="screen-reader-text">Tumblr</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-googleplus fusion-icon-googleplus" style="color:#bebdbd;" href="https://plus.google.com/share?url=https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/" onclick="javascript:window.open(this.href,&#39;&#39;, &#39;menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600&#39;);return false;" target="_blank" data-placement="top" data-title="Google+" data-toggle="tooltip" title="" data-original-title="Google+"><span class="screen-reader-text">Google+</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-pinterest fusion-icon-pinterest" style="color:#bebdbd;" href="http://pinterest.com/pin/create/button/?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fend-to-end-exactly-once-with-apache-apex%2F&amp;description=Apache%20%C2%AE%20Apex%20%28http%3A%2F%2Fapex.incubator.apache.org%2F%29%2C%20a%20stream%20processing%20platform%20that%20is%20currently%20incubating%20at%20the%20Apache%20Software%20Foundation%2C%20helps%20you%20build%20processing%20pipelines%20with%20fault%20tolerance%20and%20strong%20processing%20guarantees.%20Apex%26%2339%3Bs%20architecture%20is%20equipped%20with%20the%20capability%20for%20low-latency%20processing%2C%20scalability%2C%20high%20availability%2C%20and%20operability.%20What%26%2339%3Bs%20more%2C%20the%20Apex%20Malhar%20operator%20library%20comes%20with%20a&amp;media=" target="_blank" data-placement="top" data-title="Pinterest" data-toggle="tooltip" title="" data-original-title="Pinterest"><span class="screen-reader-text">Pinterest</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-vk fusion-icon-vk" style="color:#bebdbd;" href="http://vkontakte.ru/share.php?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fend-to-end-exactly-once-with-apache-apex%2F&amp;title=End-to-end%20%26%238220%3BExactly-Once%26%238221%3B%20%C2%9Dwith%20Apache%20Apex&amp;description=Apache%20%C2%AE%20Apex%20%28http%3A%2F%2Fapex.incubator.apache.org%2F%29%2C%20a%20stream%20processing%20platform%20that%20is%20currently%20incubating%20at%20the%20Apache%20Software%20Foundation%2C%20helps%20you%20build%20processing%20pipelines%20with%20fault%20tolerance%20and%20strong%20processing%20guarantees.%20Apex%26%2339%3Bs%20architecture%20is%20equipped%20with%20the%20capability%20for%20low-latency%20processing%2C%20scalability%2C%20high%20availability%2C%20and%20operability.%20What%26%2339%3Bs%20more%2C%20the%20Apex%20Malhar%20operator%20library%20comes%20with%20a" target="_blank" data-placement="top" data-title="Vk" data-toggle="tooltip" title="" data-original-title="Vk"><span class="screen-reader-text">Vk</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-mail fusion-icon-mail fusion-last-social-icon" style="color:#bebdbd;" href="mailto:?subject=End-to-end%20&amp;%238220;Exactly-Once&amp;%238221;%20%C3%82%C2%9Dwith%20Apache%20Apex&amp;amp;body=https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/" target="_self" data-placement="top" data-title="Email" data-toggle="tooltip" title="" data-original-title="Email"><span class="screen-reader-text">Email</span></a><div class="fusion-clearfix"></div></div></div>			</div>
+			                                                
+                                                                                
+
+
+	<div id="comments" class="comments-container">
+		<div class="fusion-title fusion-title-size-three sep-double fusion-border-below-title" style="margin-top:0px;margin-bottom:31px;"><h3 class="title-heading-left" data-fontsize="20" data-lineheight="NaN">		One Comment		</h3><div class="title-sep-container"><div class="title-sep sep-double"></div></div></div>
+							
+		<ol class="comment-list commentlist">
+							<li class="pingback even thread-even depth-1" id="comment-27">
+			<div class="the-comment">
+				<div class="avatar"></div>
+				<div class="comment-box">
+					<div class="comment-author meta">
+						<strong><a href="https://www.datatorrent.com/blog/fault-tolerant-file-processing/" rel="external nofollow" class="url">Fault-Tolerant File Processing - DataTorrent</a></strong>
+						May 17, 2016 at 8:43 pm<a rel="nofollow" class="comment-reply-link" href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/?replytocom=27#respond" onclick="return addComment.moveForm( &quot;comment-27&quot;, &quot;27&quot;, &quot;respond&quot;, &quot;3232&quot; )" aria-label="Reply to Fault-Tolerant File Processing - DataTorrent"> - Reply</a>					</div>
+					<div class="comment-text">
+												<p>[…] CountStoreOperator persists records to a database exactly once using JDBC. The operator relies on the idempotent processing of the upstream operator to ensure exactly-once semantics which is explained in detail here. […]</p>
+					</div>
+				</div>
+			</div>
+		</li><!-- #comment-## -->
+		</ol><!-- .comment-list -->
+
+								</div>
+
+
+
+	
+		<div id="respond" class="comment-respond">
+		<div class="fusion-title title fusion-title-size-three sep-double fusion-border-below-title" style="margin-top:0px;margin-bottom:31px;"><h3 id="reply-title" class="comment-reply-title title-heading-left" data-fontsize="15" data-lineheight="18">Leave A Comment <small><a rel="nofollow" id="cancel-comment-reply-link" href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/#respond" style="display:none;">Cancel reply</a></small></h3><div class="title-sep-container"><div class="title-sep sep-double "></div></div></div>			<form action="https://www.datatorrent.com/wp-comments-post.php" method="post" id="commentform" class="comment-form">
+				<div id="comment-textarea"><label class="screen-reader-text" for="comment">Comment</label><textarea name="comment" id="comment" cols="45" rows="8" aria-required="true" required="required" tabindex="0" class="textarea-comment" placeholder="Comment..." style="max-width: 715px;"></textarea></div><div id="comment-input"><input id="author" name="author" type="text" value="" placeholder="Name (required)" size="30" aria-required="true" required="required">
+<input id="email" name="email" type="email" value="" placeholder="Email (required)" size="30" aria-describedby="email-notes" aria-required="true" required="required">
+<input id="url" name="url" type="url" value="" placeholder="Website" size="30"></div>
+<p class="form-submit"><input name="submit" type="submit" id="comment-submit" class="fusion-button fusion-button-default" value="Post Comment"> <input type="hidden" name="comment_post_ID" value="3232" id="comment_post_ID">
+<input type="hidden" name="comment_parent" id="comment_parent" value="0">
+</p>			</form>
+			</div><!-- #respond -->
+	
+                                                            </div>
+                                </div>
+        <div id="sidebar" class="sidebar fusion-widget-area fusion-content-widget-area" style="float: right;">
+			
+			
+			<div id="categories-2" class="widget widget_categories"><div class="heading"><h4 class="widget-title" data-fontsize="20" data-lineheight="24">Categories</h4></div>		<ul>
+	<li class="cat-item cat-item-40"><a href="https://www.datatorrent.com/blog/category/business/">Business</a>
+</li>
+	<li class="cat-item cat-item-39"><a href="https://www.datatorrent.com/blog/category/technical/">Technical</a>
+</li>
+		</ul>
+</div><div id="hybrid-archives-2" class="widget widget-archives widget_archive"><div class="heading"><h4 class="widget-title" data-fontsize="20" data-lineheight="24">Archives</h4></div><ul class="xoxo archives"><li><a href="https://www.datatorrent.com/blog/2018/">2018</a></li><li><a href="https://www.datatorrent.com/blog/2017/">2017</a></li><li><a href="https://www.datatorrent.com/blog/2016/">2016</a></li><li><a href="https://www.datatorrent.com/blog/2015/">2015</a></li><li><a href="https://www.datatorrent.com/blog/2014/">2014</a></li><li><a href="https://www.datatorrent.com/blog/2013/">2013</a></li></ul><!-- .xoxo .archives --></div>	</div>
+    </div>
+</div><!-- end dt list -->
+ <div id="" class="cta-btn-link clearfix " style=" background-color:#eeeeee; background-image: url();"> 
+   <div class="cta-btn-link__item"> 
+     <h4 class="heading--4 cta-btn-link__heading--4" style="color:;" data-fontsize="20" data-lineheight="24">READY TO GET STARTED?</h4> 
+   </div> 
+  
+    <div class="cta-btn-link__item"> 
+     <a href="https://www.datatorrent.com/contact-us/" class="btn btn--green cta-btn-link__btn">CONTACT US</a> 
+   </div> 
+  
+ </div> 
+</div>  <!-- fusion-row -->
+
+
+
+
+<!--
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+```````````````````````````````````````````````````````````````````````` FOOTER -->
+
+<div class="footer clearfix">
+
+    <!-- LEFT -->
+    <div class="footer__left clearfix">
+        <div class="clearfix">
+            <ul class="footer__links clearfix copy--md">
+                <li><a href="https://www.datatorrent.com/products-services/" class="footer__links-item">Products &amp; Services</a></li>
+                <li><a href="https://www.datatorrent.com/appfactory/" class="footer__links-item">AppFactory</a></li>
+                <li><a href="https://www.datatorrent.com/customers/" class="footer__links-item">Customers</a></li>
+                <li><a href="https://www.datatorrent.com/company/about-us/" class="footer__links-item">Company</a></li>
+                <li><a href="https://www.datatorrent.com/download/" class="footer__links-item">Download Now</a></li>
+            </ul>
+            <ul class="footer__links clearfix copy--md">
+                <li><a href="https://www.datatorrent.com/resources/" class="footer__links-item">Resources</a></li>
+                <li><a href="https://www.datatorrent.com/partners/" class="footer__links-item">Partners</a></li>
+                <li><a href="https://www.datatorrent.com/support/" class="footer__links-item">Support</a></li>
+                <li><a href="https://www.datatorrent.com/contact-us/" class="footer__links-item">Contact Us</a></li>
+                <li><a href="https://www.datatorrent.com/site-map/" class="footer__links-item">Site Map</a></li>
+            </ul>
+        </div>
+        <div class="footer__copyright copy--sm">
+                        Copyright © 2018 DataTorrent<br>
+            Apache, Hadoop, Apex, Yarn, HDFS and the Hadoop elephant and Apache project logos are either registered trademarks or trademarks of the Apache Software Foundation in the United States or other countries.<br><br>
+            <a href="https://www.datatorrent.com/privacy-policy"> &nbsp;Privacy Policy</a>
+        </div>
+    </div><div class="footer__right">
+        <!-- newsletters signup -->
+        <div class="footer__newsletter-signup" style="display: none;">
+
+
+
+
+
+
+
+
+            <label class="footer__newsletter-label">
+                <fieldset class="footer__newsletter-fieldset">
+                    <legend class="footer__newsletter-legend">Newsletter Sign Up</legend>
+
+
+                    <script src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/forms2.min.js"></script>
+                    <form id="mktoForm_1496" novalidate="novalidate" class="mktoForm mktoHasWidth mktoLayoutLeft" style="font-family: Helvetica, Arial, sans-serif; font-size: 13px; color: rgb(51, 51, 51); width: 1121px;">
+                    <style type="text/css">.mktoForm .mktoButtonWrap.mktoSimple .mktoButton {
+color:#fff;
+border:1px solid #75ae4c;
+padding:0.4em 1em;
+font-size:1em;
+background-color:#99c47c;
+background-image: -webkit-gradient(linear, left top, left bottom, from(#99c47c), to(#75ae4c));
+background-image: -webkit-linear-gradient(top, #99c47c, #75ae4c);
+background-image: -moz-linear-gradient(top, #99c47c, #75ae4c);
+background-image: linear-gradient(to bottom, #99c47c, #75ae4c);
+}
+.mktoForm .mktoButtonWrap.mktoSimple .mktoButton:hover {
+border:1px solid #447f19;
+}
+.mktoForm .mktoButtonWrap.mktoSimple .mktoButton:focus {
+outline:none;
+border:1px solid #447f19;
+}
+.mktoForm .mktoButtonWrap.mktoSimple .mktoButton:active{
+background-color:#75ae4c;
+background-image: -webkit-gradient(linear, left top, left bottom, from(#75ae4c), to(#99c47c));
+background-image: -webkit-linear-gradient(top, #75ae4c, #99c47c);
+background-image: -moz-linear-gradient(top, #75ae4c, #99c47c);
+background-image: linear-gradient(to bottom, #75ae4c, #99c47c);
+}
+</style><div class="mktoFormRow"><div class="mktoFieldDescriptor mktoFormCol" style="margin-bottom: 10px;"><div class="mktoOffset" style="width: 10px;"></div><div class="mktoFieldWrap mktoRequiredField"><label for="Email" class="mktoLabel mktoHasWidth" style="width: 100px;"><div class="mktoAsterix">*</div>Email Address:</label><div class="mktoGutter mktoHasWidth" style="width: 10px;"></div><input id="Email" name="Email" placeholder="abc@abc.com" maxlength="255" type="email" class="mktoField mktoEmailField mktoHasWidth mktoRequired" style="width: 150px;"><div class="mktoClear"></div></div><div class="mktoClear"></div></div><div class="mktoClear"></div></div><div class="mktoButtonRow"><span class="mktoButtonWrap mktoSimple" style="margin-left: 120px;"><button type="submit" class="mktoButton">Submit</button></span></div><input type="hidden" name="formid" class="mktoField mktoFieldDescriptor" value="1496"><input type="hidden" name="munchkinId" class="mktoField mktoFieldDescriptor" value="661-RYF-836"></form>
+                    <script>MktoForms2.loadForm("//app-ab06.marketo.com", 	"661-RYF-836", 1496);</script>
+
+
+                    <!-- 		          <input class="footer__newsletter-field" placeholder="john@email.com" />
+                                      <button class="footer__newsletter-submit"><i class="fa fa-plus" aria-hidden="true"></i></button> -->
+                </fieldset>
+            </label>
+        </div>
+
+
+
+
+
+
+
+
+
+        <!-- newsletters button -->
+        <div class="footer__newsletter-btn">Newsletter Sign Up</div>
+
+        <ul class="footer__social">
+            <li><a href="https://www.facebook.com/DataTorrent/" class="footer__social-item" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a></li>
+            <li><a href="https://twitter.com/datatorrent" class="footer__social-item" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a></li>
+            <li><a href="https://www.linkedin.com/company/malhar-inc-" class="footer__social-item" target="_blank"><i class="fa fa-linkedin" aria-hidden="true"></i></a></li>
+            <li><a href="https://www.youtube.com/user/DataTorrent" class="footer__social-item" target="_blank"><i class="fa fa-youtube" aria-hidden="true"></i></a></li>
+
+            <li><a href="http://www.meetup.com/Apache-Apex-Bay-Area/" class="footer__social-item" target="_blank">
+                    <svg class="meetup-icon" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 5573.1 1990.2" style="enable-background:new 0 0 5573.1 1990.2;" xml:space="preserve">
+		      	<path d="M3283.7,1072.6c-7.7,11.6-12.6,19.5-17.9,27.2c-49.8,71.4-105.8,136.6-182,181.7
+		      		c-102.2,60.4-213,85.3-328.4,60.3c-59.2-12.9-114.4-46-170.2-72.5c-12.9-6.1-19.9-6.2-31.3,0.5c-47.9,28.2-94.4,59.9-145.1,81.8
+		      		c-89.9,38.9-184.6,60.8-282.5,34.9c-61.4-16.2-114.4-50.8-162.4-92.4c-34-29.5-36.2-29.5-70.7-1.1c-62,51-133.6,83.9-208.5,111.1
+		      		c-92.9,33.7-188.8,54.4-286.8,64.1c-119.6,11.8-230.5-8.5-311.4-106.8c-64.9-78.8-82.2-170.2-42.5-265.1
+		      		c43.5-104,93.7-205.2,140.9-307.7c24.6-53.4,49.4-106.7,73.3-160.4c4.4-9.9,6.1-21.4,6.6-32.3c0.9-20,5-41.9-18.1-54
+		      		c-23.6-12.3-51.5-10.1-68.9,11.9c-21.7,27.4-41,57.5-57.1,88.6c-53.6,102.8-105.4,206.6-157.7,310.1
+		      		c-39.2,77.6-77.7,155.6-117.2,233c-37.5,73.4-107.9,101.4-184.3,72.8c-25.7-9.7-41.8-28.6-46.2-57.5c-6.1-40.9,7.3-77.6,21.8-114.2
+		      		c31.7-80.2,63.8-160.2,95.5-240.4c17-43,34-86,49.9-129.4c11.2-30.3,14.5-62.5,1.5-92.3c-10.1-23-29.9-39.6-57.7-37.1
+		      		c-30.4,2.7-54.3,18.6-65.8,46.8c-40.3,99.5-79,199.7-118.6,299.5c-47.4,119.4-94.1,239.2-143.5,357.8
+		      		c-18.3,43.8-45.9,83.8-92.3,102.5c-23.5,9.5-50.1,15.4-75.4,15.8c-79,1-147.1-25.3-193.7-92.4C0,1264.3-9,1205,8.9,1142.2
+		      		c16.6-58.1,33.1-116.2,50.5-174c16.5-54.8,33.9-109.4,51-164c15.9-50.9,30.8-102.2,48.1-152.6c34-99.3,61.4-201.5,115.2-292.6
+		      		c36.8-62.3,96.5-96,164.9-116.9c71.5-21.8,132.5,5.6,193.5,36c23.2,11.5,46,23.8,69.8,33.8c33.2,13.9,63.4,5.1,90.2-16.7
+		      		c21.9-17.8,44-35.7,64.2-55.4c50.5-49.3,159.5-58.4,212.8-1.1c12.3,13.2,26.8,24.3,40.3,36.3c27.9,24.6,39.4,27.2,71.7,8.9
+		      		c76.8-43.3,156.3-37.3,234.4-9.6c45.3,16.1,72.5,54.7,89.8,100.3c25.5,67.2,14.8,132-10.7,195.2c-47,116.2-98.2,230.6-144,347.2
+		      		c-27.2,69.2-50.1,140.3-69.7,212c-8,29.2-8,63.9-0.6,93.2c11.2,44.4,51.9,59,93.1,64.2c62.7,7.9,124.2-3.7,184.2-20.3
+		      		c51.3-14.1,101.8-31.6,151.9-49.7c24.2-8.7,46.7-22.1,69.8-33.9c19.7-10,21.3-24.6,10.9-43c-21.2-37.5-43.6-74.5-62.3-113.3
+		      		c-39.6-82-72.1-166.6-63.4-260c7.6-81.8,37.1-152.9,112.6-195.9c111.4-63.5,201.9-46,283.8,48.9c70.8,82.1,94.2,180.9,63.8,286.8
+		      		c-17,59.2-41.4,116.4-64.6,173.7c-6.4,15.9-2.7,26,7.3,35.3c46.9,43.8,100.4,77.9,159.8,102c22.4,9.1,46.1,15.9,69.8,20.7
+		      		c51,10.2,98.4-1.9,140.9-30.8c20.2-13.7,20.7-26.5,6.6-45.7c-97.8-133.4-136.5-281.9-107.1-445c11-61.1,39.3-118.8,104.8-136.4
+		      		c40.5-10.9,86.3-10.4,128.5-5.1c68.5,8.7,130.5,36,172.6,95c50.5,70.8,63.4,148.2,41.6,232.8c-15.6,60.8-47.5,112.4-82.6,162.6
+		      		c-13.9,19.9-14.4,38.2,4.5,51.6c29.2,20.5,58.8,43,91.8,54.9c71.6,25.8,146,23.5,218.1,0.3c79-25.4,134.5-77.8,166.1-155.5
+		      		c37.8-93,38.3-190.3,36.3-288c-1.5-76.3-4.2-152.7-6.5-229.1c-0.8-27.3-5.2-28.9-31.2-23.6c-68.5,13.8-137.3,26.1-206.1,38.7
+		      		c-21.7,3.9-43.5,6.6-65.2,10.5c-47.2,8.5-86.2-10.9-88.8-66.1c-2.7-55.7-10.8-111.1-16.5-166.6c-0.3-3.1-0.6-6.3-0.8-9.4
+		      		c-3.2-65.4,12.6-100.9,91.1-98.1c81,3,162.1,5.6,243,9.9c39.8,2.1,53.8-8,56.4-47.5c2-30.7,2.9-61.4,4.8-92
+		      		c2.9-46,13.4-56.9,60.1-55.1c27.9,1.1,56,6,83.3,12.1c38.5,8.6,58.6,35.7,61.3,74c2.2,31.3,1.3,62.9,0.8,94.4
+		      		c-0.4,22.3,6.5,34.2,31.4,36.7c72,7.3,143.7,17.3,215.6,25.9c33.9,4,53,17.8,57.6,43c8,43.8-1.5,73.8-34.6,85.8
+		      		c-46.3,16.7-94.1,29.5-141.9,41.3c-33.5,8.3-68.1,11.8-102.1,18.1c-22.8,4.2-35.2,16.2-35,41.8c0.9,126.8-2,253.7,1.7,380.4
+		      		c1.9,66.5,11.9,133,40.2,195.1c22.9,50.3,61.9,70.1,116.3,61c79.7-13.4,152.8-41.4,216.4-91.8c35.3-28,58.6-62.2,60.3-109.5
+		      		c3.2-86.6,7.5-173.1,12.5-259.5c1.5-24.9,4.3-50.8,12.6-74c4.6-12.9,21.6-30,33.4-30.3c65.1-2,130.7-2.6,195.5,3
+		      		c40.8,3.5,68.8,41.7,66.6,84.8c-2.9,60.4-10.7,120.6-16.5,180.9c-7.1,74.4-13.7,148.9-21.6,223.2c-8,75.2,52.1,112.5,111.7,113.2
+		      		c49.9,0.6,79.4-18,100.6-70.9c22-54.7,35-114,44.5-172.5c13.4-83,19.7-167.2,29.6-250.8c4-34.1,25.3-60.4,51.8-66.1
+		      		c30.6-6.6,70.9,5.9,80.9,33.9c8.4,23.4,6.5,52,3.6,77.7c-10.8,95.2-26.4,190-35.4,285.4c-5.5,58.6,27.4,100.3,84.3,117.6
+		      		c28.4,8.6,57.8,15.4,87.2,18.8c51.6,5.9,88.1-31.8,98.9-90.4c9.1-49.3,10.3-100.1,14.8-150.3c5.2-59.6,5.9-119.9,16.1-178.6
+		      		c15-86.9,71.1-165.7,175.1-191c62.4-15.2,125.4-17,187.7-9.8c95,10.9,194.5,75.5,224.9,184.7c23.1,83,13.9,163.2-13.2,243
+		      		c-31.5,92.5-88.9,164.6-169.2,219.5c-7.4,5.1-11.7,14.7-17.4,22.2c10.1,4.5,20.3,12.9,30.3,12.7c96-1.5,186.4-23.4,269.3-73.7
+		      		c18.7-11.3,39.1-19.9,58.8-29.3c18.1-8.6,28.8,1.6,23.8,17.2c-8.4,26.2-18.5,53.9-35.3,75.1c-71,89.8-167.9,132.8-279.9,140.3
+		      		c-47.5,3.2-95.7-3.2-143.6-5.8c-36.1-2-72.2-5.2-108.3-7.6c-18.3-1.2-28.9,6.5-33.5,25.5c-28.8,118.7-44,239.5-58.9,360.5
+		      		c-9.4,76.2-23.6,152.2-41.9,226.8c-9.9,40.5-41.5,68.4-85.2,75.4c-26.1,4.2-45.5-7.1-54.3-31.5c-7.4-20.6-14.3-42.1-16.1-63.7
+		      		c-8.6-106.3-5.1-212.3,9-318.1c7.2-53.8,11.9-107.9,18.1-161.9c4.3-37.5,10-74.9,13.5-112.5c2.8-30.4-4.1-37.5-33.2-43.3
+		      		c-60.1-12-120.3-23.8-180.2-37c-40.7-9-72.4,5.4-99.9,33.4c-36.6,37.3-77.1,69.6-125.1,90.6c-58,25.3-119.5,20-179.1,10.5
+		      		c-86.1-13.7-154.8-59-203.7-131.6c-15.2-22.5-26.2-47.9-38.1-72.5c-6.7-13.8-12.6-19.1-28.8-10.9c-57.2,29.1-114.2,59-173.2,84
+		      		c-65.8,27.8-135.6,37.6-205.5,18.1c-68.1-19-120.4-62.9-163.8-117.7C3313.2,1110.5,3301.8,1095.7,3283.7,1072.6z M5246.2,800
+		      		c-0.8-9.4-0.8-18.9-2.3-28.2c-8.7-53.7-62.6-77.7-106.1-45.4c-19.6,14.6-37.5,33.9-50.9,54.4c-44.8,68.6-65,147.2-85.2,225.4
+		      		c-5.1,19.6-8.6,40.4-8.2,60.5c0.8,37.5,22.8,48.6,54.3,28.3c65.3-42.1,113.6-100.5,154.4-165.4C5227,890.2,5247.3,848.6,5246.2,800z
+		      		 M2685.4,837.8c0.6-37.3-8.1-71.8-35.6-98.7c-15.2-14.9-34.3-21.3-56.1-14.5c-26.5,8.2-40.8,27.9-42.8,60.5
+		      		c-3.9,63.2,23.3,117.5,51.2,171c14.4,27.5,28.1,26.7,46.6,1.2C2674.7,921.7,2684.8,881.3,2685.4,837.8z M2041.1,825.8
+		      		c-6.9-22.9-11.5-46.8-21.3-68.3c-12.6-27.4-45.1-39.7-73.8-32.2c-30.4,8-42.4,22.5-39.3,59.9c2.8,32.6,10.3,65.1,18.9,96.7
+		      		c6.4,23.3,16.2,46.1,27.7,67.3c15.6,28.5,31.9,28.8,47.2,1.2C2021.7,912.3,2038.1,872.3,2041.1,825.8z"></path>
+		      	</svg>
+                </a></li>
+
+            <li><a href="https://github.com/apache/apex-core?" class="footer__social-item" target="_blank"><i class="fa fa-github" aria-hidden="true"></i></a></li>
+        </ul>
+    </div>
+    <!-- BACK TO TOP -->
+    <a href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/#" class="btn btn--purple footer__back-to-top">Back to top</a>
+
+    <!-- RIGHT -->
+    
+</div>
+
+
+<!--
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+```````````````````````````````````````````````````````````````````````` END FOOTER -->
+
+
+
+
+
+
+
+
+<a class="fusion-one-page-text-link fusion-page-load-link"></a>
+
+<!-- W3TC-include-js-head -->
+
+
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/jquery.form.min.js"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var _wpcf7 = {"loaderUrl":"https:\/\/www.datatorrent.com\/wp-content\/plugins\/contact-form-7\/images\/ajax-loader.gif","recaptcha":{"messages":{"empty":"Please verify that you are not a robot."}},"sending":"Sending ..."};
+/* ]]> */
+</script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/scripts.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/jquery.rwdImageMaps.min.js"></script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/comment-reply.min.js"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var toTopscreenReaderText = {"label":"Go to Top"};
+var js_local_vars = {"admin_ajax":"https:\/\/www.datatorrent.com\/wp-admin\/admin-ajax.php","admin_ajax_nonce":"cacb004a5f","protocol":"1","theme_url":"https:\/\/www.datatorrent.com\/wp-content\/themes\/Avada","dropdown_goto":"Go to...","mobile_nav_cart":"Shopping Cart","page_smoothHeight":"false","flex_smoothHeight":"false","language_flag":"en","infinite_blog_finished_msg":"<em>All posts displayed.<\/em>","infinite_finished_msg":"<em>All items displayed.<\/em>","infinite_blog_text":"<em>Loading the next set of posts...<\/em>","portfolio_loading_text":"<em>Loading Portfolio Items...<\/em>","faqs_loading_text":"<em>Loading FAQ Items...<\/em>","order_actions":"Details","avada_rev_styles":"1","avada_styles_dropdowns":"1","blog_grid_column_spacing":"40","blog_pagination_type":"Pagination","carousel_speed":"2500","counter_box_speed":"1000","content_break_point":"800","disable_mobile_animate_css":"0","disable_mobile_image_hovers":"1","portfolio_pagination_type":"Pagination","form_bg_color":"#ffffff","header_transparency":"0","header_padding_bottom":"0px","header_padding_top":"0px","header_position":"Top","header_sticky":"1","header_sticky_tablet":"0","header_sticky_mobile":"0","header_sticky_type2_layout":"menu_only","sticky_header_shrinkage":"1","is_responsive":"1","is_ssl":"true","isotope_type":"masonry","layout_mode":"wide","lightbox_animation_speed":"Normal","lightbox_arrows":"1","lightbox_autoplay":"0","lightbox_behavior":"all","lightbox_desc":"1","lightbox_deeplinking":"1","lightbox_gallery":"1","lightbox_opacity":"0.9","lightbox_path":"vertical","lightbox_post_images":"1","lightbox_skin":"metro-white","lightbox_slideshow_speed":"5000","lightbox_social":"1","lightbox_title":"1","lightbox_video_height":"720","lightbox_video_width":"1280","logo_alignment":"Left","logo_margin_bottom":"31px","logo_margin_top":"31px","megamenu_max_width":"1100","mobile_menu_design":"modern","nav_height":"83","nav_highlight_border":"3","page_title_fading":"0","pagination_video_slide":"0","related_posts_speed":"2500","submenu_slideout":"1","side_header_break_point":"800","sidenav_behavior":"Hover","site_width":"1100px","slider_position":"below","slideshow_autoplay":"1","slideshow_speed":"7000","smooth_scrolling":"0","status_lightbox":"1","status_totop_mobile":"0","status_vimeo":"1","status_yt":"1","testimonials_speed":"4000","tfes_animation":"sides","tfes_autoplay":"1","tfes_interval":"3000","tfes_speed":"800","tfes_width":"150","title_style_type":"double","title_margin_top":"0px","title_margin_bottom":"31px","typography_responsive":"0","typography_sensitivity":"0.6","typography_factor":"1.5","woocommerce_shop_page_columns":"","woocommerce_checkout_error":"Not all fields have been filled in correctly.","side_header_width":"0"};
+/* ]]> */
+</script>
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/main.min.js" async=""></script> 
+<script type="text/javascript" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/wp-embed.min.js"></script>
+
+
+
+<!--[if lte IE 8]>
+<script type="text/javascript" src="https://www.datatorrent.com/wp-content/themes/Avada/assets/js/respond.js"></script>
+<![endif]-->
+
+<!-- Share This Links -->
+<script type="text/javascript" id="st_insights_js" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "d8a07399-08cb-43f6-944a-e48d00603c51", doNotHash: false, doNotCopy: true, hashAddressBar: false});</script>
+<!-- KickFire tracking code -->
+<script type="text/javascript">
+var DID=253644;
+</script>
+<script async="" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/live.js"></script>
+<!-- LinkedIn Conversion tracking code -->
+<script type="text/javascript"> _linkedin_data_partner_id = "97548"; </script>
+<script type="text/javascript"> (function(){var s = document.getElementsByTagName("script")[0]; var b = document.createElement("script"); b.type = "text/javascript";b.async = true; b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js"; s.parentNode.insertBefore(b, s);})(); </script>
+<noscript> &lt;img height="1" width="1" style="display:none;" alt="" src="https://dc.ads.linkedin.com/collect/?pid=97548&amp;fmt=gif" /&gt; </noscript>
+
+
+<div class="full reveal modal without-overlay" id="nav__search" data-reveal="7jah15-reveal" data-animation-in="fade-in" data-animation-out="fade-out" aria-labelledby="hdvafu-reveal" role="dialog" aria-hidden="true" data-yeti-box="nav__search" data-resize="nav__search" data-events="resize" style="top: 0px; left: 0px; margin: 0px;">
+
+                        <!-- click on page to close -->
+                         <div style="width: 100%; height: 100%; top: 0; left: 0; position: absolute; z-index: 0;" data-close=""></div>
+
+                        <!-- SEARCH -->
+                        <form action="https://www.datatorrent.com/" method="get" style="position: relative; z-index: 9;">
+                            <div class="nav__search-bar clearfix">
+                                <input class="nav__search-input" name="s" id="s" placeholder="type to search...">
+                                <button type="submit" class="nav__search-btn"><i class="fa fa-search" aria-hidden="true"></i></button>
+                            </div>
+                        </form>
+                        <!-- CLOSE MODAL -->
+                        <button class="close-button" data-close="" aria-label="Close modal" type="button">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div><div class="to-top-container"><a href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/#" id="toTop" style="display: none;"><span id="toTopHover"></span><span class="screen-reader-text">Go to Top</span></a></div><div id="mktoStyleLoaded" style="display: none; border-top-color: rgb(18, 52, 86);"></div><script src="https://px.ads.linkedin.com/collect/?time=1525321459114&amp;pid=97548&amp;url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fend-to-end-exactly-once-with-apache-apex%2F&amp;pageUrl=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fend-to-end-exactly-once-with-apache-apex%2F&amp;ref=http%3A%2F%2Fapex.apache.org%2Fdocs.html&amp;fmt=js&amp;s=1" type="text/javascript"></script><div id="stcpDiv" style="position: absolute; top: -1999px; left: -1988px;">ShareThis Copy and Paste</div><form novalidate="novalidate" class="mktoForm mktoHasWidth mktoLayoutLeft" style="font-family: Helvetica, Arial, sans-serif; font-size: 13px; color: rgb(51, 51, 51); visibility: hidden; position: absolute; top: -500px; left: -1000px; width: 1200px;"></form><iframe name="mktoFormsXDIframe0.629332984494732" id="MktoForms2XDIframe" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/XDFrame.html" style="display: none;"></iframe><div id="stwrapper" class="stwrapper stwrapper4x" style="display: none;"><iframe allowtransparency="true" id="stLframe" class="stLframe" name="stLframe" frameborder="0" scrolling="no" src="./End-to-end _Exactly-Once_ _with Apache Apex - DataTorrent_files/index.html"></iframe></div><div id="stOverlay" onclick="javascript:stWidget.closeWidget();"></div></body></html>

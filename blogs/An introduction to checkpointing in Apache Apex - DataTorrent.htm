@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<!-- saved from url=(0065)https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/ -->
+<html class="wf-ptsans-n4-active js wf-anticslab-n4-active wf-active ua-chrome ua-chrome-65 ua-chrome-65-0 ua-chrome-65-0-3325 ua-chrome-65-0-3325-181 ua-desktop ua-desktop-macintosh ua-mac_os_x ua-mac_os_x-10 ua-mac_os_x-10-13 ua-mac_os_x-10-13-3 ua-webkit ua-webkit-537 ua-webkit-537-36 js applicationcache geolocation history postmessage websockets localstorage sessionstorage websqldatabase webworkers hashchange audio canvas canvastext video webgl cssgradients multiplebgs opacity rgba inlinesvg hsla supports svgclippaths smil no-touchevents fontface generatedcontent textshadow indexeddb indexeddb-deletedatabase cssanimations backgroundsize borderimage borderradius boxshadow flexbox cssreflections csstransforms csstransforms3d csstransitions" lang="en-US" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# og: http://ogp.me/ns#" data-useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36" style="overflow-y: auto;"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/p.js" async=""></script><script type="text/javascript" async="" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/munchkin.js"></script><script type="text/javascript" async="" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/insight.min.js"></script><script type="text/javascript" id="async-buttons" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/async-buttons.js"></script>
+    <!-- Google Tag Manager -->
+    <script type="text/javascript" async="" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/analytics.js"></script><script src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/webfont.js" type="text/javascript" async=""></script><script async="" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/gtm.js"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-TBBMZ7');</script>
+    <!-- End Google Tag Manager -->
+
+    <script type="text/javascript">
+        (function() {
+          var didInit = false;
+          function initMunchkin() {
+            if(didInit === false) {
+              didInit = true;
+              Munchkin.init('661-RYF-836');
+            }
+          }
+          var s = document.createElement('script');
+          s.type = 'text/javascript';
+          s.async = true;
+          s.src = '//munchkin.marketo.net/munchkin.js';
+          s.onreadystatechange = function() {
+            if (this.readyState == 'complete' || this.readyState == 'loaded') {
+              initMunchkin();
+            }
+          };
+          s.onload = initMunchkin;
+          document.getElementsByTagName('head')[0].appendChild(s);
+        })();
+    </script><script type="text/javascript" async="" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/munchkin(1).js"></script>
+    
+    
+    
+    <link rel="shortcut icon" href="https://www.datatorrent.com/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="https://www.datatorrent.com/favicon.ico" type="image/x-icon">
+
+    
+    <!--[if lte IE 8]>
+    <script type="text/javascript" src="https://www.datatorrent.com/wp-content/themes/Avada/assets/js/html5shiv.js"></script>
+    <![endif]-->
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>An introduction to checkpointing in Apache Apex - DataTorrent</title>
+						<script>
+							/* You can add more configuration options to webfontloader by previously defining the WebFontConfig with your options */
+							if ( typeof WebFontConfig === "undefined" ) {
+								WebFontConfig = new Object();
+							}
+							WebFontConfig['google'] = {families: ['Antic+Slab:400', 'PT+Sans:400']};
+
+							(function() {
+								var wf = document.createElement( 'script' );
+								wf.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1.5.3/webfont.js';
+								wf.type = 'text/javascript';
+								wf.async = 'true';
+								var s = document.getElementsByTagName( 'script' )[0];
+								s.parentNode.insertBefore( wf, s );
+							})();
+						</script>
+						
+<!-- This site is optimized with the Yoast SEO plugin v5.7.1 - https://yoast.com/wordpress/plugins/seo/ -->
+<link rel="canonical" href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="article">
+<meta property="og:title" content="An introduction to checkpointing in Apache Apex - DataTorrent">
+<meta property="og:description" content="For successful launch of fast, big data projects, try DataTorrent’s AppFactory. Big data is evolving  in a big way. As it booms, the issue of fault  tolerance  becomes more and more exigent. What happens if a node fails? Will your application recover from the effects of data or process corruption? In a conventional world, the …">
+<meta property="og:url" content="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/">
+<meta property="og:site_name" content="DataTorrent">
+<meta property="article:tag" content="Apache Apex">
+<meta property="article:section" content="Technical">
+<meta property="article:published_time" content="2015-11-10T08:00:45+00:00">
+<meta property="article:modified_time" content="2018-01-08T10:00:13+00:00">
+<meta property="og:updated_time" content="2018-01-08T10:00:13+00:00">
+<meta property="og:image" content="https://www.datatorrent.com/wp-content/uploads/2015/10/image001.png">
+<meta property="og:image:secure_url" content="https://www.datatorrent.com/wp-content/uploads/2015/10/image001.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:description" content="For successful launch of fast, big data projects, try DataTorrent’s AppFactory. Big data is evolving  in a big way. As it booms, the issue of fault  tolerance  becomes more and more exigent. What happens if a node fails? Will your application recover from the effects of data or process corruption? In a conventional world, the […]">
+<meta name="twitter:title" content="An introduction to checkpointing in Apache Apex - DataTorrent">
+<meta name="twitter:image" content="https://www.datatorrent.com/wp-content/uploads/2015/10/image001.png">
+<script type="application/ld+json">{"@context":"http:\/\/schema.org","@type":"WebSite","@id":"#website","url":"https:\/\/www.datatorrent.com\/","name":"DataTorrent","potentialAction":{"@type":"SearchAction","target":"https:\/\/www.datatorrent.com\/?s={search_term_string}","query-input":"required name=search_term_string"}}</script>
+<script type="application/ld+json">{"@context":"http:\/\/schema.org","@type":"Organization","url":"https:\/\/www.datatorrent.com\/blog\/blog-introduction-to-checkpoint\/","sameAs":[],"@id":"#organization","name":"DataTorrent","logo":"https:\/\/www.datatorrent.com\/wp-content\/uploads\/2016\/11\/DataTorrentLogoWP.png"}</script>
+<!-- / Yoast SEO plugin. -->
+
+<link rel="dns-prefetch" href="https://s.w.org/">
+<link rel="alternate" type="application/rss+xml" title="DataTorrent » Feed" href="https://www.datatorrent.com/feed/">
+<link rel="alternate" type="application/rss+xml" title="DataTorrent » Comments Feed" href="https://www.datatorrent.com/comments/feed/">
+			<!-- For iPad Retina display -->
+			<link rel="apple-touch-icon-precomposed" sizes="144x144" href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/">
+		<link rel="alternate" type="application/rss+xml" title="DataTorrent » An introduction to checkpointing in Apache Apex Comments Feed" href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/feed/">
+
+		<meta property="og:title" content="An introduction to checkpointing in Apache Apex">
+		<meta property="og:type" content="article">
+		<meta property="og:url" content="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/">
+		<meta property="og:site_name" content="DataTorrent">
+		<meta property="og:description" content="For successful launch of fast, big data projects, try DataTorrent’s AppFactory.
+Big data is evolving  in a big way. As it booms, the issue of fault  tolerance  becomes more and more exigent. What happens if a node fails? Will your application recover from the effects of">
+
+				<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/www.datatorrent.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.9.2"}};
+			!function(a,b,c){function d(a,b){var c=String.fromCharCode;l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,a),0,0);var d=k.toDataURL();l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,b),0,0);var e=k.toDataURL();return d===e}function e(a){var b;if(!l||!l.fillText)return!1;switch(l.textBaseline="top",l.font="600 32px Arial",a){case"flag":return!(b=d([55356,56826,55356,56819],[55356,56826,8203,55356,56819]))&&(b=d([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]),!b);case"emoji":return b=d([55358,56794,8205,9794,65039],[55358,56794,8203,9794,65039]),!b}return!1}function f(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var g,h,i,j,k=b.createElement("canvas"),l=k.getContext&&k.getContext("2d");for(j=Array("flag","emoji"),c.supports={everything:!0,everythingExceptFlag:!0},i=0;i<j.length;i++)c.supports[j[i]]=e(j[i]),c.supports.everything=c.supports.everything&&c.supports[j[i]],"flag"!==j[i]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[j[i]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(h=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",h,!1),a.addEventListener("load",h,!1)):(a.attachEvent("onload",h),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),g=c.source||{},g.concatemoji?f(g.concatemoji):g.wpemoji&&g.twemoji&&(f(g.twemoji),f(g.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script><script src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/wp-emoji-release.min.js" type="text/javascript" defer=""></script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+<link rel="stylesheet" id="avada-stylesheet-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/style.css" type="text/css" media="all">
+<link rel="stylesheet" id="avada-dynamic-css-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/avada-2254.css" type="text/css" media="all">
+<link rel="stylesheet" id="contact-form-7-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/styles.css" type="text/css" media="all">
+<link rel="stylesheet" id="stylesheet-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/styles(1).css" type="text/css" media="all">
+<link rel="stylesheet" id="dt-shortcodes-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/shortcodes.css" type="text/css" media="all">
+<link rel="stylesheet" id="dt-avadashortcodes-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/avada-shortcodes.css" type="text/css" media="all">
+<link rel="stylesheet" id="dt-avadastyles-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/avada-styles.css" type="text/css" media="all">
+<link rel="stylesheet" id="avada-parent-stylesheet-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/style(1).css" type="text/css" media="all">
+<link rel="stylesheet" id="fontawesome-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/font-awesome.css" type="text/css" media="all">
+<!--[if lte IE 9]>
+<link rel='stylesheet' id='avada-IE-fontawesome-css'  href='https://www.datatorrent.com/wp-content/themes/Avada/assets/fonts/fontawesome/font-awesome.css?ver=1.0.0' type='text/css' media='all' />
+<![endif]-->
+<!--[if lte IE 8]>
+<link rel='stylesheet' id='avada-IE8-css'  href='https://www.datatorrent.com/wp-content/themes/Avada/assets/css/ie8.css?ver=1.0.0' type='text/css' media='all' />
+<![endif]-->
+<!--[if IE]>
+<link rel='stylesheet' id='avada-IE-css'  href='https://www.datatorrent.com/wp-content/themes/Avada/assets/css/ie.css?ver=1.0.0' type='text/css' media='all' />
+<![endif]-->
+<link rel="stylesheet" id="avada-iLightbox-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/ilightbox.css" type="text/css" media="all">
+<link rel="stylesheet" id="avada-animations-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/animations.css" type="text/css" media="all">
+<link rel="stylesheet" id="A2A_SHARE_SAVE-css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/addtoany.min.css" type="text/css" media="all">
+<link rel="stylesheet" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/css"><script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/jquery.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/jquery-migrate.min.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/addtoany.min.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/jquery.matchHeight-min.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/fastclick.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/foundation.min.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/jquery.dotdotdot.min.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/jquery.sticky.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/lightslider.min.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/breakpoints.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/jquery.background-video.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/jquery.smooth-scroll.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/swiper.min.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/main.js"></script>
+<link rel="https://api.w.org/" href="https://www.datatorrent.com/wp-json/">
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://www.datatorrent.com/xmlrpc.php?rsd">
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://www.datatorrent.com/wp-includes/wlwmanifest.xml"> 
+<meta name="generator" content="WordPress 4.9.2">
+<link rel="shortlink" href="https://www.datatorrent.com/?p=2254">
+<link rel="alternate" type="application/json+oembed" href="https://www.datatorrent.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fblog-introduction-to-checkpoint%2F">
+<link rel="alternate" type="text/xml+oembed" href="https://www.datatorrent.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fblog-introduction-to-checkpoint%2F&amp;format=xml">
+
+<script type="text/javascript">
+var a2a_config=a2a_config||{};a2a_config.callbacks=a2a_config.callbacks||[];a2a_config.templates=a2a_config.templates||{};
+</script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/page.js" async="async"></script>
+<script type="text/javascript">
+	jQuery(document).ready(function(){
+		jQuery('img[usemap]').rwdImageMaps();
+	});
+</script>
+<style type="text/css">
+	img[usemap] { max-width: 100%; height: auto; }
+</style>
+<!--[if IE 9]> <script>var _fusionParallaxIE9 = true;</script> <![endif]-->
+    
+    <!--[if lte IE 8]>
+    <script type="text/javascript">
+        jQuery(document).ready(function () {
+            var imgs, i, w;
+            var imgs = document.getElementsByTagName('img');
+            for (i = 0; i < imgs.length; i++) {
+                w = imgs[i].getAttribute('width');
+                imgs[i].removeAttribute('width');
+                imgs[i].removeAttribute('height');
+            }
+        });
+    </script>
+
+    <script src="https://www.datatorrent.com/wp-content/themes/Avada/assets/js/excanvas.js"></script>
+
+    <![endif]-->
+
+    <!--[if lte IE 9]>
+    <script type="text/javascript">
+        jQuery(document).ready(function () {
+
+            // Combine inline styles for body tag
+            jQuery('body').each(function () {
+                var combined_styles = '<style type="text/css">';
+
+                jQuery(this).find('style').each(function () {
+                    combined_styles += jQuery(this).html();
+                    jQuery(this).remove();
+                });
+
+                combined_styles += '</style>';
+
+                jQuery(this).prepend(combined_styles);
+            });
+        });
+    </script>
+
+    <![endif]-->
+
+    <script type="text/javascript">
+        var doc = document.documentElement;
+        doc.setAttribute('data-useragent', navigator.userAgent);
+    </script>
+
+    
+    <meta class="foundation-mq"><link rel="stylesheet" type="text/css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/buttons-secure.css"><iframe id="stSegmentFrame" name="stSegmentFrame" frameborder="0" scrolling="no" width="0px" height="0px" sandbox="allow-scripts allow-same-origin" style="display:none;" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/saved_resource.html"></iframe><style id="fit-vids-style">.fluid-width-video-wrapper{width:100%;position:relative;padding:0;}.fluid-width-video-wrapper iframe,.fluid-width-video-wrapper object,.fluid-width-video-wrapper embed {position:absolute;top:0;left:0;width:100%;height:100%;}</style><link id="mktoForms2BaseStyle" rel="stylesheet" type="text/css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/forms2.css"><link id="mktoForms2ThemeStyle" rel="stylesheet" type="text/css" href="./An introduction to checkpointing in Apache Apex - DataTorrent_files/forms2-theme-simple.css"></head>
+
+
+<body class="post-template-default single single-post postid-2254 single-format-standard fusion-body no-tablet-sticky-header no-mobile-sticky-header no-mobile-slidingbar no-mobile-totop mobile-logo-pos-left layout-wide-mode has-sidebar menu-text-align-center mobile-menu-design-modern fusion-image-hovers fusion-show-pagination-text do-animate breakpoint-1024" style="">
+<!-- Google Tag Manager (noscript) -->
+<noscript>&lt;iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TBBMZ7"
+                  height="0" width="0" style="display:none;visibility:hidden"&gt;&lt;/iframe&gt;</noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+
+
+
+
+<!--
+`````````````````````````````````````````````
+`````````````````````````````````````````````
+````````````````````````````````````````````` NAV -->
+<nav class="nav clearfix">
+
+    <!-- MAIN NAV -->
+    <div class="nav__main-nav">
+        <!-- MOBILE BAR -->
+        <div class="nav__mobile-bar clearfix">
+            <!-- SEARCH -->
+            <div class="nav__mobile-search">
+                <a data-open="nav__search" aria-controls="nav__search" id="p8vfsl-reveal" aria-haspopup="true" tabindex="0"><i class="fa fa-search" aria-hidden="true"></i></a>
+            </div>
+
+            <!-- LOGO -->
+            <div class="nav__mobile-logo">
+                <a href="https://www.datatorrent.com/"><img src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/logo_datatorrent.png" width="100%" height="100%" class="nav__logo"></a>
+            </div>
+
+            <!-- HAMBURGER MENU -->
+            <div class="title-bar" data-responsive-toggle="main-menu" data-hide-for="medium" style="display: none;">
+                <button class="menu-icon" type="button" data-toggle=""></button>
+            </div>
+        </div>
+
+        <!-- NAV MENU CONTAINER -->
+        <div class="nav__menu-container">
+            <!-- MAIN NAV -->
+            <div class="top-bar" id="main-menu">
+                <ul class="horizontal menu nav__menu dropdown" data-hover-delay="0" data-closing-time="0" data-responsive-menu="drilldown medium-dropdown" data-back-button="&lt;li class=&quot;js-drilldown-back&quot;&gt;&lt;a tabindex=&quot;0&quot;&gt;Main Menu&lt;/a&gt;&lt;/li&gt;" role="menubar" data-dropdown-menu="bo47e2-dropdown-menu">
+                    <!-- PRODUCTS AND SERVICES -->
+                    <li class="nav__menu-item is-dropdown-submenu-parent opens-right" role="menuitem" aria-haspopup="true" aria-expanded="false" aria-label="Products">
+                        <a href="https://www.datatorrent.com/products-services" tabindex="0">Products</a>
+                        <ul class="vertical menu nav__submenu submenu is-dropdown-submenu first-sub" data-submenu="" aria-hidden="true" role="menu">
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item">
+                                <a href="https://www.datatorrent.com/products-services/benefits/" class="nav__menu-mega-link">6 Reasons Why DataTorrent</a>
+                                <a href="https://www.datatorrent.com/products-services/datatorrent-rts/" class="nav__menu-mega-link">DataTorrent RTS</a>
+                                <a href="https://www.datatorrent.com/appfactory/" class="nav__menu-mega-link">AppFactory</a>
+                                <a href="https://www.datatorrent.com/products-services/architecture/" class="nav__menu-mega-link">Architecture</a>
+                                <a href="https://www.datatorrent.com/products-services/apache-apex/" class="nav__menu-mega-link">Apache Apex</a>
+                                <!--<a href="/products-services/deployment-modes/" class="nav__menu-mega-link">Deployment Modes</a>-->
+                            </li>
+                        </ul>
+                    </li>
+                    <!-- SOLUTIONS -->
+                    <!--<li class="nav__menu-item">
+                        <a href="/solutions">Solutions</a>
+                        <ul class="vertical menu nav__submenu">
+                            <li>
+                                <a href="#" class="nav__submenu-link">Use Cases</a>
+                                <ul class="vertical menu nav__thirdmenu">
+                                    <li><a href="/solutions/use-case/complex-data-replication/" class="nav__submenu-link">Complex Data Replication</a></li>
+                                    <li><a href="/solutions/use-case/data-ingestion/" class="nav__submenu-link">Data Ingestion</a></li>
+                                    <li><a href="/solutions/use-case/data-preparation/" class="nav__submenu-link">Data Preparation</a></li>
+                                    <li><a href="/solutions/use-case/dimensional-compute/" class="nav__submenu-link">Dimensional Compute</a></li>
+                                    <li><a href="/solutions/use-case/oltp-data-streaming/" class="nav__submenu-link">OLTP Data Streaming</a></li>
+                                    <li><a href="/solutions/use-case/streaming-with-five-9s-availability/" class="nav__submenu-link">Streaming with Five 9s Availability</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#" class="nav__submenu-link">Industry</a>
+                                <ul class="vertical menu nav__thirdmenu">
+                                    <li><a href="/solutions/industry-page/advertising-technology/" class="nav__submenu-link">Advertising Technology</a></li>
+                                    <li><a href="/solutions/industry-page/energy-and-utilities/" class="nav__submenu-link">Energy and Utilities</a></li>
+                                    <li><a href="/solutions/industry-page/financial-services/" class="nav__submenu-link">Financial Services</a></li>
+                                    <li><a href="/solutions/industry-page/healthcare/" class="nav__submenu-link">Healthcare</a></li>
+                                    <li><a href="/solutions/industry-page/internet-of-things-iot/" class="nav__submenu-link">Internet of Things (IoT)</a></li>
+                                    <li><a href="/solutions/industry-page/oil-gas/" class="nav__submenu-link">Oil &amp; Gas</a></li>
+                                    <li><a href="/solutions/industry-page/retail-ecommerce/" class="nav__submenu-link">Retail &amp; eCommerce</a></li>
+                                    <li><a href="/solutions/industry-page/security-intelligence/" class="nav__submenu-link">Security &amp; Intelligence</a></li>
+                                    <li><a href="/solutions/industry-page/telecommunications/" class="nav__submenu-link">Telecommunications</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>-->
+                    
+                    <!-- CUSTOMERS -->
+                    <li class="nav__menu-item" role="menuitem">
+                        <a href="https://www.datatorrent.com/customers/">Customers</a>
+                    </li>
+                    <!-- GET ENGAGED -->
+                    <li class="nav__menu-item is-dropdown-submenu-parent opens-right" role="menuitem" aria-haspopup="true" aria-expanded="false" aria-label="Get Engaged">
+                        <a href="https://www.datatorrent.com/contact-us">Get Engaged</a>
+                        <ul class="vertical menu nav__submenu submenu is-dropdown-submenu first-sub" data-submenu="" aria-hidden="true" role="menu">
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/jumpstart/" class="nav__submenu-link">JumpStart</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/contact-us/" class="nav__submenu-link">Contact Us</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/request-a-demo/" class="nav__submenu-link">Request a Demo</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/download/" class="nav__submenu-link">Download RTS</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="http://apex.apache.org/downloads.html" class="nav__submenu-link">Download Apex</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/support/" class="nav__submenu-link">Get Support</a></li>
+                            <!--<li><a href="/products-services/start-up-accelerator/" class="nav__submenu-link">Startup Accelerator</a></li>-->
+                            <!--<li><a href="/university-incubator/" class="nav__submenu-link">University Incubator</a></li>-->
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/company/partners/" class="nav__submenu-link">Become A Partner</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/products-services/professional-services/" class="nav__submenu-link">Professional Services</a></li>
+                            <!--<li><a href="/university/" class="nav__submenu-link">Get Training</a></li>-->
+                        </ul>
+                    </li>
+
+                     <!-- MORE -->
+                    <li class="nav__menu-item is-dropdown-submenu-parent opens-right" role="menuitem" aria-haspopup="true" aria-expanded="false" aria-label="More">
+                        <a href="https://www.datatorrent.com/company/about-us/">More</a>
+                        <ul class="vertical menu nav__submenu submenu is-dropdown-submenu first-sub" data-submenu="" aria-hidden="true" role="menu">
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/company/about-us/" class="nav__submenu-link">About Us</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/news/" class="nav__submenu-link">In the News</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/blog/" class="nav__submenu-link">Blogs</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/events/" class="nav__submenu-link">Events</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/resources/" class="nav__submenu-link">Resources</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/company/why-datatorrent/" class="nav__submenu-link">Why DataTorrent</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/growth/" class="nav__submenu-link" target="_blank">Momentum</a></li>
+                            <li role="menuitem" class="is-submenu-item is-dropdown-submenu-item"><a href="https://www.datatorrent.com/company/careers/" class="nav__submenu-link">Careers</a></li>
+                            <!--<li><a href="/company/team/" class="nav__submenu-link">Team</a></li>-->
+                        </ul>
+                    </li>
+
+                    <!-- SEARCH ICON -->
+                    <li class="nav__menu-item" role="menuitem"><a data-open="nav__search" aria-controls="nav__search" id="p8vfsl-reveal" aria-haspopup="true" tabindex="0"><i class="fa fa-search" aria-hidden="true"></i></a></li>
+                    <!-- MODAL -->
+                    
+                    <li role="menuitem"><a href="https://www.datatorrent.com/download/" class="btn btn--green nav__btn">Download Now</a></li>
+                </ul>
+            </div>
+            <!-- /top bar -->
+        </div>
+        <!-- /menu container -->
+    </div>
+    <!-- /main nav -->
+</nav>
+<div class="sticky-header-target"></div>
+<!--
+`````````````````````````````````````````````
+`````````````````````````````````````````````
+````````````````````````````````````````````` END NAV -->
+
+
+
+<!--
+`````````````````````````````````````````````
+`````````````````````````````````````````````
+````````````````````````````````````````````` STICKY HEADER -->
+<div style="position: relative;">
+<div class="sticky-header clearfix" style="display: none;">
+    <!-- left -->
+    <div class="sticky-header__left">
+        <a href="https://www.datatorrent.com/"><img src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/logo_datatorrent.png" width="100%" height="100%" class="nav__logo"></a>
+    </div>
+    <!-- right -->
+    <div class="sticky-header__right">
+        <a href="https://www.datatorrent.com/download/" class="btn btn--green nav__btn">Download Now</a>
+    </div>
+</div>
+</div>
+<!--
+`````````````````````````````````````````````
+`````````````````````````````````````````````
+````````````````````````````````````````````` /STICKY HEADER -->
+
+
+
+<div class="fusion-row" style=""> <div id="" class="topper " style="background: url(&quot;/wp-content/uploads/2017/08/header-black.jpg&quot;) center center / cover no-repeat; position: relative; overflow: hidden;"> 
+   <video class="jquery-background-video" muted="" loop="" poster="/wp-content/uploads/2017/08/header-black.jpg" style="min-width: auto; min-height: auto; width: 1200px; height: auto; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); transition-duration: 2000ms;">
+     <source src="no" type="video/mp4"> 
+   </video> 
+   <div class="relative"> 
+<!-- BANNER --> 
+<div class="topper__banner topper__banner--xs"> 
+    <!-- h1 --> 
+    <h1 class="heading--1" style="color: #ffffff; font-size: !important;" data-fontsize="70" data-lineheight="84">The DataTorrent Blog</h1> 
+    <!-- category --> 
+</div> 
+<!-- STICKY NAV --> 
+<ul class="topper__underline-nav topper__underline-nav--6 clearfix green "> 
+ <li><a href="https://www.datatorrent.com/documents/" class="topper__underline-nav-item">Documents</a></li> 
+ <li><a href="https://www.datatorrent.com/videos/" class="topper__underline-nav-item">Videos</a></li> 
+ <li><a href="https://www.datatorrent.com/webinars/" class="topper__underline-nav-item">Webinars</a></li> 
+ <li><a href="https://www.datatorrent.com/events/" class="topper__underline-nav-item">Events</a></li> 
+ <li><a href="https://www.datatorrent.com/blog/" class="topper__underline-nav-item">Blogs</a></li> 
+ <li><a href="https://www.datatorrent.com/product-documentation/" class="topper__underline-nav-item">Product Docs</a></li> 
+</ul> 
+</div> 
+<button class="jquery-background-video-pauseplay pause" style="left: auto; right: 15px; top: 15px; bottom: auto;"><span>Pause</span></button></div> 
+<div class="clearfix dt-list-page">
+    <div class="padding padding--tb-sm fusion-clearfix">
+
+        <div id="content" style="float: left;">
+
+                            <div class="single-navigation clearfix">
+                    <a href="https://www.datatorrent.com/blog/dimensions-computation-aggregate-navigator-part-2-implementation/" rel="prev">Previous</a>                    <a href="https://www.datatorrent.com/blog/next-gen-decision-making-in-under-2-milliseconds/" rel="next">Next</a>                </div>
+            
+                            <div id="post-2254" class="post post-2254 type-post status-publish format-standard has-post-thumbnail hentry category-technical tag-apache-apex">
+                                        
+                                                                                                                                        <div class="fusion-flexslider flexslider post-slideshow fusion-post-slideshow">
+                                    <ul class="slides">
+                                                                                                                                                                                                                                                                <li class="flex-active-slide" style="width: 100%; float: left; margin-right: -100%; position: relative; opacity: 1; display: block; z-index: 2;">
+                                                                                                    <a href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/" data-rel="iLightbox[gallery2254]" title="" data-title="" data-caption="" class="fusion-no-lightbox">
+                                                        <span class="screen-reader-text">View Larger Image</span>
+                                                                                                            </a>
+                                                                                            </li>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </ul>
+                                <ol class="flex-control-nav flex-control-paging"></ol><ul class="flex-direction-nav"><li><a class="flex-prev flex-disabled" href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/#" tabindex="-1"></a></li><li><a class="flex-next flex-disabled" href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/#" tabindex="-1"></a></li></ul></div>
+                                                                                                        
+                                            <h2 class="entry-title" data-fontsize="30" data-lineheight="36">An introduction to checkpointing in Apache Apex</h2>                                        <div class="post-content">
+                        <p>For successful launch of fast, big data projects, try DataTorrent’s <a href="https://www.datatorrent.com/appfactory/">AppFactory</a>.</p>
+<p class="c2"><span class="c0">Big data is evolving<span class="c0"> &nbsp;</span><span class="c3">i</span><span class="c0">n a big way. As it booms, the issue of </span><span class="c0">fault</span><span class="c3"> &nbsp;</span><span class="c0">tolerance</span><span class="c0"> &nbsp;becomes more and more exigent. What happens if a node fails? Will your application recover from the effects of data or process corruption?</span></span></p>
+<p class="c2"><span class="c0">In a conventional world, the simplest solution for such a problem would have been a restart of the offending processes from the beginning. However, that was the conventional world, with data sizes still within the reach of imagination. In the world of big data, the size of data cannot be imagined. </span><span class="c3">Let alone imagine, the growth is almost incomprehensible.</span><span class="c0"> &nbsp;A complete restart would mean </span><span class="c3">wasting </span><span class="c0">precious resources, be it time, or CPU capacity. Such a restart in a real-time scenario would also be unpredictable. After all, how do you recover data that changed by the second (or even less) accurately? </span></p>
+<p class="c2"><span class="c0">Fault tolerance</span><span class="c0"> &nbsp;is not just a need, it is an absolute necessity. </span><span class="c3">The lack of a fault tolerance mechanism affects SLAs</span><span class="c3">. </span><span class="c3">A system can be made fault-tolerant by using checkpointing</span><span class="c3">. </span><span class="c0">You can think of a checkpointing mechanism as a recovery process; a system process saves snapshots</span><span class="c3"> &nbsp;of </span><span class="c0">application states periodically, and uses these snapshots for recovery in case of failures. </span><span class="c3">A</span><span class="c0"> &nbsp;platform developer alone should ensure that a big data platform is checkpoint</span><span class="c3">–</span><span class="c0">compliant. Application developers should only be concerned with their business logic, thus ensuring clear distinction between operability and functional behavior. </span></p>
+<p class="c2"><span class="c3 c7">Apex treats checkpointing as a native function, allowing application developers to stop worrying about application consistency</span><span class="c3">. </span></p>
+<p class="c2"><span class="c0">Apache</span><span class="c0 c12"> ®</span><span class="c0"> &nbsp;Apex does checkpointing intelligently, while relieving application developers of the need to worry about their platforms being failsafe.</span><span class="c3"> &nbsp;</span><span class="c0">By transparently checkpointing the state of operators to HDFS periodically, Apex ensures that the operators are recoverable on any node within a cluster</span><span class="c3">. </span><span class="c3">The Apex infrastructure is designed to scale, while ensuring easy recovery at any point during failure</span><span class="c3">. The </span><span class="c0">Apex checkpointing mechanism uses the DFS interfa</span><span class="c3">ce. thereby being agnostic to the DFS implementation.</span></p>
+<p class="c2"><span class="c3 c7">Apex introduces checkpointing by maintaining operator states within HDFS.</span></p>
+<p class="c2"><span class="c3">Apex serializes the state of operators to local disks, and then asynchronously copies serialized state to HDFS. The state is asynchronously copied to HDFS in order to ensure that the performance of applications is not affected by the HDFS latency. An operator is considered “checkpointed” only after the serialized state is copied to HDFS. In case of </span><span class="c3 c8"><a class="c1" href="https://www.datatorrent.com/docs/guides/ApplicationDeveloperGuide.html#h.1gf8i83">Exactly-Once </a></span><span class="c3">recovery mechanism, platform checkpoints at every window boundary and it behaves in synchronous mode i.e the operator is blocked till the state is copied to HDFS. </span></p>
+<p class="c2"><span class="c3">Although Apex is designed to checkpoint at window boundaries, developers can control how optimal a checkpoint operation is.</span><span class="c3"> &nbsp;</span><span class="c3">Developers can control how often checkpointing is triggered. They can do this by configuring the window boundary at which checkpointing will occur, by using the </span><span class="c3 c10"><a class="c1" href="https://www.datatorrent.com/docs/apidocs/com/datatorrent/api/Context.OperatorContext.html#CHECKPOINT_WINDOW_COUNT">CHECKPOINT_WINDOW_COUNT</a></span><span class="c3"> &nbsp;attribute. </span><span class="c0">Frequent checkpoints hamper the overall application performance. This is in stark contrast to sparsely placed checkpoints, which are dangerous because they might make application recovery a </span><span class="c3">time-consuming</span><span class="c0"> &nbsp;task. </span></p>
+<p class="c2"><span class="c3 c7">See this example to see how the apex checkpointing mechanism works. </span></p>
+<p class="c2"><span class="c3">In our example, let us set CHECKPOINT_WINDOW_COUNT to 1. This diagram shows the flow of data within window boundaries.  &nbsp;You will see that at the end of each window, Apex checkpoints data in order to ensure that it is consistent. If the operator crashes during window n+1, Apex restores it to nearest stable state, in this example, the state obtained by introducing checkpointing at the end of window n. The operator now starts processing window n+1 from the beginning. If CHECKPOINT_WINDOW_COUNT was set to 2, then there would have been one checkpoint before window n, and another checkpoint after window n+1.</span></p>
+<p class="c2"><img title="" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/image001.png" alt="checkpointing.png"></p>
+<p class="c2"><span class="c3 c7">Judicious checkpointing ensures optimum application performance</span></p>
+<p class="c2"><span class="c3">Checkpointing is a costly and a resource-intensive operation, indicating that an overindulgence will impact an application’s performance. </span><span class="c3">To</span><span class="c3 c9"> &nbsp;</span><span class="c3">act as a deterrent to the performance slowdown because of checkpointing, Apex checkpoints non-transient data only.</span><span class="c3 c9"> &nbsp;</span><span class="c3">For example, in JDBC operator, connection can be reinitialized at the time of setup, it should be marked as transient, and thus omitted from getting checkpointed. </span></p>
+<p class="c2"><span class="c0">Application developers must know </span><span class="c3">whether</span><span class="c0"> &nbsp;to checkpoint or not; the thumb rule dictates that </span><span class="c0">operators</span><span class="c0"> &nbsp;for which computation depends on the previous state must be checkpointed. An example is the Counter operator, which tracks the number of tuples processed by the system. Because the operator relies on </span><span class="c3">its previous state to proceed, it</span><span class="c0"> &nbsp;needs to be checkpointed. Some operators are stateless; their computation does not depend on the previous state. Application developers can omit such operators from checkpointing operations by using the </span><span class="c3 c8"><a class="c1" href="https://www.datatorrent.com/docs/apidocs/com/datatorrent/api/Context.OperatorContext.html#STATELESS">STATELESS</a></span><span class="c0"> &nbsp;attribute or </span><span class="c3">by annotating the operator with </span><span class="c3 c8"><a class="c1" href="https://www.datatorrent.com/docs/apidocs/com/datatorrent/api/annotation/Stateless.html">Stateless</a></span><span class="c0">.</span></p>
+<p>DataTorrent helps our customers get into production quickly using open source technologies to handle real-time, data-in-motion, fast, big data for critical business outcomes. Using the best-of-breed solutions in open source, we harden the open source applications to make them act and look as one through our unique IP that we call Apoxi™. Apoxi is a framework that gives you the power to manage those open source applications reliably just like you do with your proprietary enterprise software applications, lowering the time to value (TTV) with total lower cost of ownership (TCO).  To get started, you can download DataTorrent RTS or micro data services from the DataTorrent <a href="https://www.datatorrent.com/appfactory/">AppFactory</a>.</p>
+                                            </div>
+
+                    
+                           
+
+                        <div class="fusion-meta-info"><div class="fusion-meta-info-wrapper"><div class="blog-author-single">Gaurav Gupta&nbsp;|&nbsp;</div>
+	
+			<span class="vcard" style="display: none;">
+			<span class="fn">
+				<a href="https://www.datatorrent.com/blog/author/michelle/" title="Posts by michelle" rel="author">michelle</a>			</span>
+		</span>
+	
+	
+
+	
+	
+			<span class="updated" style="display:none;">
+			2018-01-08T10:00:13+00:00		</span>
+	
+<span>November 10th, 2015</span><span class="fusion-inline-sep">|</span><a href="https://www.datatorrent.com/blog/category/technical/" rel="category tag">Technical</a><span class="fusion-inline-sep">|</span><span class="fusion-comments"><a href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/#comments">1 Comment</a></span></div></div>                        			<div class="fusion-sharing-box fusion-single-sharing-box share-box">
+				<h4 data-fontsize="13" data-lineheight="19">Share This Story, Choose Your Platform!</h4>
+				<div class="fusion-social-networks"><div class="fusion-social-networks-wrapper"><a class="fusion-social-network-icon fusion-tooltip fusion-facebook fusion-icon-facebook" style="color:#bebdbd;" href="http://www.facebook.com/sharer.php?m2w&amp;s=100&amp;p[url]=https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/&amp;p[images][0]=&amp;p[title]=An%20introduction%20to%20checkpointing%20in%20Apache%20Apex" target="_blank" data-placement="top" data-title="Facebook" data-toggle="tooltip" title="" data-original-title="Facebook"><span class="screen-reader-text">Facebook</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-twitter fusion-icon-twitter" style="color:#bebdbd;" href="https://twitter.com/share?text=An%20introduction%20to%20checkpointing%20in%20Apache%20Apex&amp;url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fblog-introduction-to-checkpoint%2F" target="_blank" data-placement="top" data-title="Twitter" data-toggle="tooltip" title="" data-original-title="Twitter"><span class="screen-reader-text">Twitter</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-linkedin fusion-icon-linkedin" style="color:#bebdbd;" href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/&amp;title=An%20introduction%20to%20checkpointing%20in%20Apache%20Apex&amp;summary=For%20successful%20launch%20of%20fast%2C%20big%20data%20projects%2C%20try%20DataTorrent%E2%80%99s%20AppFactory.%0D%0ABig%20data%20is%20evolving%20%C2%A0in%20a%20big%20way.%20As%20it%20booms%2C%20the%20issue%20of%20fault%20%C2%A0tolerance%20%C2%A0becomes%20more%20and%20more%20exigent.%20What%20happens%20if%20a%20node%20fails%3F%20Will%20your%20application%20recover%20from%20the%20effects%20of" target="_blank" data-placement="top" data-title="Linkedin" data-toggle="tooltip" title="" data-original-title="Linkedin"><span class="screen-reader-text">Linkedin</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-reddit fusion-icon-reddit" style="color:#bebdbd;" href="http://reddit.com/submit?url=https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/&amp;title=An%20introduction%20to%20checkpointing%20in%20Apache%20Apex" target="_blank" data-placement="top" data-title="Reddit" data-toggle="tooltip" title="" data-original-title="Reddit"><span class="screen-reader-text">Reddit</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-tumblr fusion-icon-tumblr" style="color:#bebdbd;" href="http://www.tumblr.com/share/link?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fblog-introduction-to-checkpoint%2F&amp;name=An%20introduction%20to%20checkpointing%20in%20Apache%20Apex&amp;description=For%20successful%20launch%20of%20fast%2C%20big%20data%20projects%2C%20try%20DataTorrent%E2%80%99s%20AppFactory.%0D%0ABig%20data%20is%20evolving%20%C2%A0in%20a%20big%20way.%20As%20it%20booms%2C%20the%20issue%20of%20fault%20%C2%A0tolerance%20%C2%A0becomes%20more%20and%20more%20exigent.%20What%20happens%20if%20a%20node%20fails%3F%20Will%20your%20application%20recover%20from%20the%20effects%20of" target="_blank" data-placement="top" data-title="Tumblr" data-toggle="tooltip" title="" data-original-title="Tumblr"><span class="screen-reader-text">Tumblr</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-googleplus fusion-icon-googleplus" style="color:#bebdbd;" href="https://plus.google.com/share?url=https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/" onclick="javascript:window.open(this.href,&#39;&#39;, &#39;menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600&#39;);return false;" target="_blank" data-placement="top" data-title="Google+" data-toggle="tooltip" title="" data-original-title="Google+"><span class="screen-reader-text">Google+</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-pinterest fusion-icon-pinterest" style="color:#bebdbd;" href="http://pinterest.com/pin/create/button/?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fblog-introduction-to-checkpoint%2F&amp;description=For%20successful%20launch%20of%20fast%2C%20big%20data%20projects%2C%20try%20DataTorrent%E2%80%99s%20AppFactory.%0D%0ABig%20data%20is%20evolving%20%C2%A0in%20a%20big%20way.%20As%20it%20booms%2C%20the%20issue%20of%20fault%20%C2%A0tolerance%20%C2%A0becomes%20more%20and%20more%20exigent.%20What%20happens%20if%20a%20node%20fails%3F%20Will%20your%20application%20recover%20from%20the%20effects%20of&amp;media=" target="_blank" data-placement="top" data-title="Pinterest" data-toggle="tooltip" title="" data-original-title="Pinterest"><span class="screen-reader-text">Pinterest</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-vk fusion-icon-vk" style="color:#bebdbd;" href="http://vkontakte.ru/share.php?url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fblog-introduction-to-checkpoint%2F&amp;title=An%20introduction%20to%20checkpointing%20in%20Apache%20Apex&amp;description=For%20successful%20launch%20of%20fast%2C%20big%20data%20projects%2C%20try%20DataTorrent%E2%80%99s%20AppFactory.%0D%0ABig%20data%20is%20evolving%20%C2%A0in%20a%20big%20way.%20As%20it%20booms%2C%20the%20issue%20of%20fault%20%C2%A0tolerance%20%C2%A0becomes%20more%20and%20more%20exigent.%20What%20happens%20if%20a%20node%20fails%3F%20Will%20your%20application%20recover%20from%20the%20effects%20of" target="_blank" data-placement="top" data-title="Vk" data-toggle="tooltip" title="" data-original-title="Vk"><span class="screen-reader-text">Vk</span></a><a class="fusion-social-network-icon fusion-tooltip fusion-mail fusion-icon-mail fusion-last-social-icon" style="color:#bebdbd;" href="mailto:?subject=An%20introduction%20to%20checkpointing%20in%20Apache%20Apex&amp;amp;body=https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/" target="_self" data-placement="top" data-title="Email" data-toggle="tooltip" title="" data-original-title="Email"><span class="screen-reader-text">Email</span></a><div class="fusion-clearfix"></div></div></div>			</div>
+			                                                
+                                                                                
+
+
+	<div id="comments" class="comments-container">
+		<div class="fusion-title fusion-title-size-three sep-double fusion-border-below-title" style="margin-top:0px;margin-bottom:31px;"><h3 class="title-heading-left" data-fontsize="20" data-lineheight="NaN">		One Comment		</h3><div class="title-sep-container"><div class="title-sep sep-double"></div></div></div>
+							
+		<ol class="comment-list commentlist">
+							<li class="pingback even thread-even depth-1" id="comment-22">
+			<div class="the-comment">
+				<div class="avatar"></div>
+				<div class="comment-box">
+					<div class="comment-author meta">
+						<strong><a href="https://www.datatorrent.com/blog/end-to-end-exactly-once-with-apache-apex/" rel="external nofollow" class="url">End-to-end "Exactly-Once"  with Apache Apex - DataTorrent</a></strong>
+						March 4, 2016 at 4:22 pm<a rel="nofollow" class="comment-reply-link" href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/?replytocom=22#respond" onclick="return addComment.moveForm( &quot;comment-22&quot;, &quot;22&quot;, &quot;respond&quot;, &quot;2254&quot; )" aria-label="Reply to End-to-end &quot;Exactly-Once&quot;  with Apache Apex - DataTorrent"> - Reply</a>					</div>
+					<div class="comment-text">
+												<p>[…] be able to recover the state of an operator, it needs to be saved or checkpointed. In Apex, this is done through a pluggable mechanism which by default serializes the operator state […]</p>
+					</div>
+				</div>
+			</div>
+		</li><!-- #comment-## -->
+		</ol><!-- .comment-list -->
+
+								</div>
+
+
+
+	
+		<div id="respond" class="comment-respond">
+		<div class="fusion-title title fusion-title-size-three sep-double fusion-border-below-title" style="margin-top:0px;margin-bottom:31px;"><h3 id="reply-title" class="comment-reply-title title-heading-left" data-fontsize="15" data-lineheight="18">Leave A Comment <small><a rel="nofollow" id="cancel-comment-reply-link" href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/#respond" style="display:none;">Cancel reply</a></small></h3><div class="title-sep-container"><div class="title-sep sep-double "></div></div></div>			<form action="https://www.datatorrent.com/wp-comments-post.php" method="post" id="commentform" class="comment-form">
+				<div id="comment-textarea"><label class="screen-reader-text" for="comment">Comment</label><textarea name="comment" id="comment" cols="45" rows="8" aria-required="true" required="required" tabindex="0" class="textarea-comment" placeholder="Comment..." style="max-width: 715px;"></textarea></div><div id="comment-input"><input id="author" name="author" type="text" value="" placeholder="Name (required)" size="30" aria-required="true" required="required">
+<input id="email" name="email" type="email" value="" placeholder="Email (required)" size="30" aria-describedby="email-notes" aria-required="true" required="required">
+<input id="url" name="url" type="url" value="" placeholder="Website" size="30"></div>
+<p class="form-submit"><input name="submit" type="submit" id="comment-submit" class="fusion-button fusion-button-default" value="Post Comment"> <input type="hidden" name="comment_post_ID" value="2254" id="comment_post_ID">
+<input type="hidden" name="comment_parent" id="comment_parent" value="0">
+</p>			</form>
+			</div><!-- #respond -->
+	
+                                                            </div>
+                                </div>
+        <div id="sidebar" class="sidebar fusion-widget-area fusion-content-widget-area" style="float: right;">
+			
+			
+			<div id="categories-2" class="widget widget_categories"><div class="heading"><h4 class="widget-title" data-fontsize="20" data-lineheight="24">Categories</h4></div>		<ul>
+	<li class="cat-item cat-item-40"><a href="https://www.datatorrent.com/blog/category/business/">Business</a>
+</li>
+	<li class="cat-item cat-item-39"><a href="https://www.datatorrent.com/blog/category/technical/">Technical</a>
+</li>
+		</ul>
+</div><div id="hybrid-archives-2" class="widget widget-archives widget_archive"><div class="heading"><h4 class="widget-title" data-fontsize="20" data-lineheight="24">Archives</h4></div><ul class="xoxo archives"><li><a href="https://www.datatorrent.com/blog/2018/">2018</a></li><li><a href="https://www.datatorrent.com/blog/2017/">2017</a></li><li><a href="https://www.datatorrent.com/blog/2016/">2016</a></li><li><a href="https://www.datatorrent.com/blog/2015/">2015</a></li><li><a href="https://www.datatorrent.com/blog/2014/">2014</a></li><li><a href="https://www.datatorrent.com/blog/2013/">2013</a></li></ul><!-- .xoxo .archives --></div>	</div>
+    </div>
+</div><!-- end dt list -->
+ <div id="" class="cta-btn-link clearfix " style=" background-color:#eeeeee; background-image: url();"> 
+   <div class="cta-btn-link__item"> 
+     <h4 class="heading--4 cta-btn-link__heading--4" style="color:;" data-fontsize="20" data-lineheight="24">READY TO GET STARTED?</h4> 
+   </div> 
+  
+    <div class="cta-btn-link__item"> 
+     <a href="https://www.datatorrent.com/contact-us/" class="btn btn--green cta-btn-link__btn">CONTACT US</a> 
+   </div> 
+  
+ </div> 
+</div>  <!-- fusion-row -->
+
+
+
+
+<!--
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+```````````````````````````````````````````````````````````````````````` FOOTER -->
+
+<div class="footer clearfix">
+
+    <!-- LEFT -->
+    <div class="footer__left clearfix">
+        <div class="clearfix">
+            <ul class="footer__links clearfix copy--md">
+                <li><a href="https://www.datatorrent.com/products-services/" class="footer__links-item">Products &amp; Services</a></li>
+                <li><a href="https://www.datatorrent.com/appfactory/" class="footer__links-item">AppFactory</a></li>
+                <li><a href="https://www.datatorrent.com/customers/" class="footer__links-item">Customers</a></li>
+                <li><a href="https://www.datatorrent.com/company/about-us/" class="footer__links-item">Company</a></li>
+                <li><a href="https://www.datatorrent.com/download/" class="footer__links-item">Download Now</a></li>
+            </ul>
+            <ul class="footer__links clearfix copy--md">
+                <li><a href="https://www.datatorrent.com/resources/" class="footer__links-item">Resources</a></li>
+                <li><a href="https://www.datatorrent.com/partners/" class="footer__links-item">Partners</a></li>
+                <li><a href="https://www.datatorrent.com/support/" class="footer__links-item">Support</a></li>
+                <li><a href="https://www.datatorrent.com/contact-us/" class="footer__links-item">Contact Us</a></li>
+                <li><a href="https://www.datatorrent.com/site-map/" class="footer__links-item">Site Map</a></li>
+            </ul>
+        </div>
+        <div class="footer__copyright copy--sm">
+                        Copyright © 2018 DataTorrent<br>
+            Apache, Hadoop, Apex, Yarn, HDFS and the Hadoop elephant and Apache project logos are either registered trademarks or trademarks of the Apache Software Foundation in the United States or other countries.<br><br>
+            <a href="https://www.datatorrent.com/privacy-policy"> &nbsp;Privacy Policy</a>
+        </div>
+    </div><div class="footer__right">
+        <!-- newsletters signup -->
+        <div class="footer__newsletter-signup" style="display: none;">
+
+
+
+
+
+
+
+
+            <label class="footer__newsletter-label">
+                <fieldset class="footer__newsletter-fieldset">
+                    <legend class="footer__newsletter-legend">Newsletter Sign Up</legend>
+
+
+                    <script src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/forms2.min.js"></script>
+                    <form id="mktoForm_1496" novalidate="novalidate" class="mktoForm mktoHasWidth mktoLayoutLeft" style="font-family: Helvetica, Arial, sans-serif; font-size: 13px; color: rgb(51, 51, 51); width: 1121px;">
+                    <style type="text/css">.mktoForm .mktoButtonWrap.mktoSimple .mktoButton {
+color:#fff;
+border:1px solid #75ae4c;
+padding:0.4em 1em;
+font-size:1em;
+background-color:#99c47c;
+background-image: -webkit-gradient(linear, left top, left bottom, from(#99c47c), to(#75ae4c));
+background-image: -webkit-linear-gradient(top, #99c47c, #75ae4c);
+background-image: -moz-linear-gradient(top, #99c47c, #75ae4c);
+background-image: linear-gradient(to bottom, #99c47c, #75ae4c);
+}
+.mktoForm .mktoButtonWrap.mktoSimple .mktoButton:hover {
+border:1px solid #447f19;
+}
+.mktoForm .mktoButtonWrap.mktoSimple .mktoButton:focus {
+outline:none;
+border:1px solid #447f19;
+}
+.mktoForm .mktoButtonWrap.mktoSimple .mktoButton:active{
+background-color:#75ae4c;
+background-image: -webkit-gradient(linear, left top, left bottom, from(#75ae4c), to(#99c47c));
+background-image: -webkit-linear-gradient(top, #75ae4c, #99c47c);
+background-image: -moz-linear-gradient(top, #75ae4c, #99c47c);
+background-image: linear-gradient(to bottom, #75ae4c, #99c47c);
+}
+</style><div class="mktoFormRow"><div class="mktoFieldDescriptor mktoFormCol" style="margin-bottom: 10px;"><div class="mktoOffset" style="width: 10px;"></div><div class="mktoFieldWrap mktoRequiredField"><label for="Email" class="mktoLabel mktoHasWidth" style="width: 100px;"><div class="mktoAsterix">*</div>Email Address:</label><div class="mktoGutter mktoHasWidth" style="width: 10px;"></div><input id="Email" name="Email" placeholder="abc@abc.com" maxlength="255" type="email" class="mktoField mktoEmailField mktoHasWidth mktoRequired" style="width: 150px;"><div class="mktoClear"></div></div><div class="mktoClear"></div></div><div class="mktoClear"></div></div><div class="mktoButtonRow"><span class="mktoButtonWrap mktoSimple" style="margin-left: 120px;"><button type="submit" class="mktoButton">Submit</button></span></div><input type="hidden" name="formid" class="mktoField mktoFieldDescriptor" value="1496"><input type="hidden" name="munchkinId" class="mktoField mktoFieldDescriptor" value="661-RYF-836"></form>
+                    <script>MktoForms2.loadForm("//app-ab06.marketo.com", 	"661-RYF-836", 1496);</script>
+
+
+                    <!-- 		          <input class="footer__newsletter-field" placeholder="john@email.com" />
+                                      <button class="footer__newsletter-submit"><i class="fa fa-plus" aria-hidden="true"></i></button> -->
+                </fieldset>
+            </label>
+        </div>
+
+
+
+
+
+
+
+
+
+        <!-- newsletters button -->
+        <div class="footer__newsletter-btn">Newsletter Sign Up</div>
+
+        <ul class="footer__social">
+            <li><a href="https://www.facebook.com/DataTorrent/" class="footer__social-item" target="_blank"><i class="fa fa-facebook" aria-hidden="true"></i></a></li>
+            <li><a href="https://twitter.com/datatorrent" class="footer__social-item" target="_blank"><i class="fa fa-twitter" aria-hidden="true"></i></a></li>
+            <li><a href="https://www.linkedin.com/company/malhar-inc-" class="footer__social-item" target="_blank"><i class="fa fa-linkedin" aria-hidden="true"></i></a></li>
+            <li><a href="https://www.youtube.com/user/DataTorrent" class="footer__social-item" target="_blank"><i class="fa fa-youtube" aria-hidden="true"></i></a></li>
+
+            <li><a href="http://www.meetup.com/Apache-Apex-Bay-Area/" class="footer__social-item" target="_blank">
+                    <svg class="meetup-icon" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 5573.1 1990.2" style="enable-background:new 0 0 5573.1 1990.2;" xml:space="preserve">
+		      	<path d="M3283.7,1072.6c-7.7,11.6-12.6,19.5-17.9,27.2c-49.8,71.4-105.8,136.6-182,181.7
+		      		c-102.2,60.4-213,85.3-328.4,60.3c-59.2-12.9-114.4-46-170.2-72.5c-12.9-6.1-19.9-6.2-31.3,0.5c-47.9,28.2-94.4,59.9-145.1,81.8
+		      		c-89.9,38.9-184.6,60.8-282.5,34.9c-61.4-16.2-114.4-50.8-162.4-92.4c-34-29.5-36.2-29.5-70.7-1.1c-62,51-133.6,83.9-208.5,111.1
+		      		c-92.9,33.7-188.8,54.4-286.8,64.1c-119.6,11.8-230.5-8.5-311.4-106.8c-64.9-78.8-82.2-170.2-42.5-265.1
+		      		c43.5-104,93.7-205.2,140.9-307.7c24.6-53.4,49.4-106.7,73.3-160.4c4.4-9.9,6.1-21.4,6.6-32.3c0.9-20,5-41.9-18.1-54
+		      		c-23.6-12.3-51.5-10.1-68.9,11.9c-21.7,27.4-41,57.5-57.1,88.6c-53.6,102.8-105.4,206.6-157.7,310.1
+		      		c-39.2,77.6-77.7,155.6-117.2,233c-37.5,73.4-107.9,101.4-184.3,72.8c-25.7-9.7-41.8-28.6-46.2-57.5c-6.1-40.9,7.3-77.6,21.8-114.2
+		      		c31.7-80.2,63.8-160.2,95.5-240.4c17-43,34-86,49.9-129.4c11.2-30.3,14.5-62.5,1.5-92.3c-10.1-23-29.9-39.6-57.7-37.1
+		      		c-30.4,2.7-54.3,18.6-65.8,46.8c-40.3,99.5-79,199.7-118.6,299.5c-47.4,119.4-94.1,239.2-143.5,357.8
+		      		c-18.3,43.8-45.9,83.8-92.3,102.5c-23.5,9.5-50.1,15.4-75.4,15.8c-79,1-147.1-25.3-193.7-92.4C0,1264.3-9,1205,8.9,1142.2
+		      		c16.6-58.1,33.1-116.2,50.5-174c16.5-54.8,33.9-109.4,51-164c15.9-50.9,30.8-102.2,48.1-152.6c34-99.3,61.4-201.5,115.2-292.6
+		      		c36.8-62.3,96.5-96,164.9-116.9c71.5-21.8,132.5,5.6,193.5,36c23.2,11.5,46,23.8,69.8,33.8c33.2,13.9,63.4,5.1,90.2-16.7
+		      		c21.9-17.8,44-35.7,64.2-55.4c50.5-49.3,159.5-58.4,212.8-1.1c12.3,13.2,26.8,24.3,40.3,36.3c27.9,24.6,39.4,27.2,71.7,8.9
+		      		c76.8-43.3,156.3-37.3,234.4-9.6c45.3,16.1,72.5,54.7,89.8,100.3c25.5,67.2,14.8,132-10.7,195.2c-47,116.2-98.2,230.6-144,347.2
+		      		c-27.2,69.2-50.1,140.3-69.7,212c-8,29.2-8,63.9-0.6,93.2c11.2,44.4,51.9,59,93.1,64.2c62.7,7.9,124.2-3.7,184.2-20.3
+		      		c51.3-14.1,101.8-31.6,151.9-49.7c24.2-8.7,46.7-22.1,69.8-33.9c19.7-10,21.3-24.6,10.9-43c-21.2-37.5-43.6-74.5-62.3-113.3
+		      		c-39.6-82-72.1-166.6-63.4-260c7.6-81.8,37.1-152.9,112.6-195.9c111.4-63.5,201.9-46,283.8,48.9c70.8,82.1,94.2,180.9,63.8,286.8
+		      		c-17,59.2-41.4,116.4-64.6,173.7c-6.4,15.9-2.7,26,7.3,35.3c46.9,43.8,100.4,77.9,159.8,102c22.4,9.1,46.1,15.9,69.8,20.7
+		      		c51,10.2,98.4-1.9,140.9-30.8c20.2-13.7,20.7-26.5,6.6-45.7c-97.8-133.4-136.5-281.9-107.1-445c11-61.1,39.3-118.8,104.8-136.4
+		      		c40.5-10.9,86.3-10.4,128.5-5.1c68.5,8.7,130.5,36,172.6,95c50.5,70.8,63.4,148.2,41.6,232.8c-15.6,60.8-47.5,112.4-82.6,162.6
+		      		c-13.9,19.9-14.4,38.2,4.5,51.6c29.2,20.5,58.8,43,91.8,54.9c71.6,25.8,146,23.5,218.1,0.3c79-25.4,134.5-77.8,166.1-155.5
+		      		c37.8-93,38.3-190.3,36.3-288c-1.5-76.3-4.2-152.7-6.5-229.1c-0.8-27.3-5.2-28.9-31.2-23.6c-68.5,13.8-137.3,26.1-206.1,38.7
+		      		c-21.7,3.9-43.5,6.6-65.2,10.5c-47.2,8.5-86.2-10.9-88.8-66.1c-2.7-55.7-10.8-111.1-16.5-166.6c-0.3-3.1-0.6-6.3-0.8-9.4
+		      		c-3.2-65.4,12.6-100.9,91.1-98.1c81,3,162.1,5.6,243,9.9c39.8,2.1,53.8-8,56.4-47.5c2-30.7,2.9-61.4,4.8-92
+		      		c2.9-46,13.4-56.9,60.1-55.1c27.9,1.1,56,6,83.3,12.1c38.5,8.6,58.6,35.7,61.3,74c2.2,31.3,1.3,62.9,0.8,94.4
+		      		c-0.4,22.3,6.5,34.2,31.4,36.7c72,7.3,143.7,17.3,215.6,25.9c33.9,4,53,17.8,57.6,43c8,43.8-1.5,73.8-34.6,85.8
+		      		c-46.3,16.7-94.1,29.5-141.9,41.3c-33.5,8.3-68.1,11.8-102.1,18.1c-22.8,4.2-35.2,16.2-35,41.8c0.9,126.8-2,253.7,1.7,380.4
+		      		c1.9,66.5,11.9,133,40.2,195.1c22.9,50.3,61.9,70.1,116.3,61c79.7-13.4,152.8-41.4,216.4-91.8c35.3-28,58.6-62.2,60.3-109.5
+		      		c3.2-86.6,7.5-173.1,12.5-259.5c1.5-24.9,4.3-50.8,12.6-74c4.6-12.9,21.6-30,33.4-30.3c65.1-2,130.7-2.6,195.5,3
+		      		c40.8,3.5,68.8,41.7,66.6,84.8c-2.9,60.4-10.7,120.6-16.5,180.9c-7.1,74.4-13.7,148.9-21.6,223.2c-8,75.2,52.1,112.5,111.7,113.2
+		      		c49.9,0.6,79.4-18,100.6-70.9c22-54.7,35-114,44.5-172.5c13.4-83,19.7-167.2,29.6-250.8c4-34.1,25.3-60.4,51.8-66.1
+		      		c30.6-6.6,70.9,5.9,80.9,33.9c8.4,23.4,6.5,52,3.6,77.7c-10.8,95.2-26.4,190-35.4,285.4c-5.5,58.6,27.4,100.3,84.3,117.6
+		      		c28.4,8.6,57.8,15.4,87.2,18.8c51.6,5.9,88.1-31.8,98.9-90.4c9.1-49.3,10.3-100.1,14.8-150.3c5.2-59.6,5.9-119.9,16.1-178.6
+		      		c15-86.9,71.1-165.7,175.1-191c62.4-15.2,125.4-17,187.7-9.8c95,10.9,194.5,75.5,224.9,184.7c23.1,83,13.9,163.2-13.2,243
+		      		c-31.5,92.5-88.9,164.6-169.2,219.5c-7.4,5.1-11.7,14.7-17.4,22.2c10.1,4.5,20.3,12.9,30.3,12.7c96-1.5,186.4-23.4,269.3-73.7
+		      		c18.7-11.3,39.1-19.9,58.8-29.3c18.1-8.6,28.8,1.6,23.8,17.2c-8.4,26.2-18.5,53.9-35.3,75.1c-71,89.8-167.9,132.8-279.9,140.3
+		      		c-47.5,3.2-95.7-3.2-143.6-5.8c-36.1-2-72.2-5.2-108.3-7.6c-18.3-1.2-28.9,6.5-33.5,25.5c-28.8,118.7-44,239.5-58.9,360.5
+		      		c-9.4,76.2-23.6,152.2-41.9,226.8c-9.9,40.5-41.5,68.4-85.2,75.4c-26.1,4.2-45.5-7.1-54.3-31.5c-7.4-20.6-14.3-42.1-16.1-63.7
+		      		c-8.6-106.3-5.1-212.3,9-318.1c7.2-53.8,11.9-107.9,18.1-161.9c4.3-37.5,10-74.9,13.5-112.5c2.8-30.4-4.1-37.5-33.2-43.3
+		      		c-60.1-12-120.3-23.8-180.2-37c-40.7-9-72.4,5.4-99.9,33.4c-36.6,37.3-77.1,69.6-125.1,90.6c-58,25.3-119.5,20-179.1,10.5
+		      		c-86.1-13.7-154.8-59-203.7-131.6c-15.2-22.5-26.2-47.9-38.1-72.5c-6.7-13.8-12.6-19.1-28.8-10.9c-57.2,29.1-114.2,59-173.2,84
+		      		c-65.8,27.8-135.6,37.6-205.5,18.1c-68.1-19-120.4-62.9-163.8-117.7C3313.2,1110.5,3301.8,1095.7,3283.7,1072.6z M5246.2,800
+		      		c-0.8-9.4-0.8-18.9-2.3-28.2c-8.7-53.7-62.6-77.7-106.1-45.4c-19.6,14.6-37.5,33.9-50.9,54.4c-44.8,68.6-65,147.2-85.2,225.4
+		      		c-5.1,19.6-8.6,40.4-8.2,60.5c0.8,37.5,22.8,48.6,54.3,28.3c65.3-42.1,113.6-100.5,154.4-165.4C5227,890.2,5247.3,848.6,5246.2,800z
+		      		 M2685.4,837.8c0.6-37.3-8.1-71.8-35.6-98.7c-15.2-14.9-34.3-21.3-56.1-14.5c-26.5,8.2-40.8,27.9-42.8,60.5
+		      		c-3.9,63.2,23.3,117.5,51.2,171c14.4,27.5,28.1,26.7,46.6,1.2C2674.7,921.7,2684.8,881.3,2685.4,837.8z M2041.1,825.8
+		      		c-6.9-22.9-11.5-46.8-21.3-68.3c-12.6-27.4-45.1-39.7-73.8-32.2c-30.4,8-42.4,22.5-39.3,59.9c2.8,32.6,10.3,65.1,18.9,96.7
+		      		c6.4,23.3,16.2,46.1,27.7,67.3c15.6,28.5,31.9,28.8,47.2,1.2C2021.7,912.3,2038.1,872.3,2041.1,825.8z"></path>
+		      	</svg>
+                </a></li>
+
+            <li><a href="https://github.com/apache/apex-core?" class="footer__social-item" target="_blank"><i class="fa fa-github" aria-hidden="true"></i></a></li>
+        </ul>
+    </div>
+    <!-- BACK TO TOP -->
+    <a href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/#" class="btn btn--purple footer__back-to-top">Back to top</a>
+
+    <!-- RIGHT -->
+    
+</div>
+
+
+<!--
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````
+```````````````````````````````````````````````````````````````````````` END FOOTER -->
+
+
+
+
+
+
+
+
+<a class="fusion-one-page-text-link fusion-page-load-link"></a>
+
+<!-- W3TC-include-js-head -->
+
+
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/jquery.form.min.js"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var _wpcf7 = {"loaderUrl":"https:\/\/www.datatorrent.com\/wp-content\/plugins\/contact-form-7\/images\/ajax-loader.gif","recaptcha":{"messages":{"empty":"Please verify that you are not a robot."}},"sending":"Sending ..."};
+/* ]]> */
+</script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/scripts.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/jquery.rwdImageMaps.min.js"></script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/comment-reply.min.js"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var toTopscreenReaderText = {"label":"Go to Top"};
+var js_local_vars = {"admin_ajax":"https:\/\/www.datatorrent.com\/wp-admin\/admin-ajax.php","admin_ajax_nonce":"cacb004a5f","protocol":"1","theme_url":"https:\/\/www.datatorrent.com\/wp-content\/themes\/Avada","dropdown_goto":"Go to...","mobile_nav_cart":"Shopping Cart","page_smoothHeight":"false","flex_smoothHeight":"false","language_flag":"en","infinite_blog_finished_msg":"<em>All posts displayed.<\/em>","infinite_finished_msg":"<em>All items displayed.<\/em>","infinite_blog_text":"<em>Loading the next set of posts...<\/em>","portfolio_loading_text":"<em>Loading Portfolio Items...<\/em>","faqs_loading_text":"<em>Loading FAQ Items...<\/em>","order_actions":"Details","avada_rev_styles":"1","avada_styles_dropdowns":"1","blog_grid_column_spacing":"40","blog_pagination_type":"Pagination","carousel_speed":"2500","counter_box_speed":"1000","content_break_point":"800","disable_mobile_animate_css":"0","disable_mobile_image_hovers":"1","portfolio_pagination_type":"Pagination","form_bg_color":"#ffffff","header_transparency":"0","header_padding_bottom":"0px","header_padding_top":"0px","header_position":"Top","header_sticky":"1","header_sticky_tablet":"0","header_sticky_mobile":"0","header_sticky_type2_layout":"menu_only","sticky_header_shrinkage":"1","is_responsive":"1","is_ssl":"true","isotope_type":"masonry","layout_mode":"wide","lightbox_animation_speed":"Normal","lightbox_arrows":"1","lightbox_autoplay":"0","lightbox_behavior":"all","lightbox_desc":"1","lightbox_deeplinking":"1","lightbox_gallery":"1","lightbox_opacity":"0.9","lightbox_path":"vertical","lightbox_post_images":"1","lightbox_skin":"metro-white","lightbox_slideshow_speed":"5000","lightbox_social":"1","lightbox_title":"1","lightbox_video_height":"720","lightbox_video_width":"1280","logo_alignment":"Left","logo_margin_bottom":"31px","logo_margin_top":"31px","megamenu_max_width":"1100","mobile_menu_design":"modern","nav_height":"83","nav_highlight_border":"3","page_title_fading":"0","pagination_video_slide":"0","related_posts_speed":"2500","submenu_slideout":"1","side_header_break_point":"800","sidenav_behavior":"Hover","site_width":"1100px","slider_position":"below","slideshow_autoplay":"1","slideshow_speed":"7000","smooth_scrolling":"0","status_lightbox":"1","status_totop_mobile":"0","status_vimeo":"1","status_yt":"1","testimonials_speed":"4000","tfes_animation":"sides","tfes_autoplay":"1","tfes_interval":"3000","tfes_speed":"800","tfes_width":"150","title_style_type":"double","title_margin_top":"0px","title_margin_bottom":"31px","typography_responsive":"0","typography_sensitivity":"0.6","typography_factor":"1.5","woocommerce_shop_page_columns":"","woocommerce_checkout_error":"Not all fields have been filled in correctly.","side_header_width":"0"};
+/* ]]> */
+</script>
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/main.min.js" async=""></script> 
+<script type="text/javascript" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/wp-embed.min.js"></script>
+
+
+
+<!--[if lte IE 8]>
+<script type="text/javascript" src="https://www.datatorrent.com/wp-content/themes/Avada/assets/js/respond.js"></script>
+<![endif]-->
+
+<!-- Share This Links -->
+<script type="text/javascript" id="st_insights_js" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/buttons.js"></script>
+<script type="text/javascript">stLight.options({publisher: "d8a07399-08cb-43f6-944a-e48d00603c51", doNotHash: false, doNotCopy: true, hashAddressBar: false});</script>
+<!-- KickFire tracking code -->
+<script type="text/javascript">
+var DID=253644;
+</script>
+<script async="" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/live.js"></script>
+<!-- LinkedIn Conversion tracking code -->
+<script type="text/javascript"> _linkedin_data_partner_id = "97548"; </script>
+<script type="text/javascript"> (function(){var s = document.getElementsByTagName("script")[0]; var b = document.createElement("script"); b.type = "text/javascript";b.async = true; b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js"; s.parentNode.insertBefore(b, s);})(); </script>
+<noscript> &lt;img height="1" width="1" style="display:none;" alt="" src="https://dc.ads.linkedin.com/collect/?pid=97548&amp;fmt=gif" /&gt; </noscript>
+
+
+<div class="full reveal modal without-overlay" id="nav__search" data-reveal="f1gwir-reveal" data-animation-in="fade-in" data-animation-out="fade-out" aria-labelledby="p8vfsl-reveal" role="dialog" aria-hidden="true" data-yeti-box="nav__search" data-resize="nav__search" data-events="resize" style="top: 0px; left: 0px; margin: 0px;">
+
+                        <!-- click on page to close -->
+                         <div style="width: 100%; height: 100%; top: 0; left: 0; position: absolute; z-index: 0;" data-close=""></div>
+
+                        <!-- SEARCH -->
+                        <form action="https://www.datatorrent.com/" method="get" style="position: relative; z-index: 9;">
+                            <div class="nav__search-bar clearfix">
+                                <input class="nav__search-input" name="s" id="s" placeholder="type to search...">
+                                <button type="submit" class="nav__search-btn"><i class="fa fa-search" aria-hidden="true"></i></button>
+                            </div>
+                        </form>
+                        <!-- CLOSE MODAL -->
+                        <button class="close-button" data-close="" aria-label="Close modal" type="button">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div><div class="to-top-container"><a href="https://www.datatorrent.com/blog/blog-introduction-to-checkpoint/#" id="toTop" style="display: none;"><span id="toTopHover"></span><span class="screen-reader-text">Go to Top</span></a></div><div id="mktoStyleLoaded" style="display: none; border-top-color: rgb(18, 52, 86);"></div><script src="https://px.ads.linkedin.com/collect/?time=1525321424493&amp;pid=97548&amp;url=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fblog-introduction-to-checkpoint%2F&amp;pageUrl=https%3A%2F%2Fwww.datatorrent.com%2Fblog%2Fblog-introduction-to-checkpoint%2F&amp;ref=http%3A%2F%2Fapex.apache.org%2Fdocs.html&amp;fmt=js&amp;s=1" type="text/javascript"></script><div id="stcpDiv" style="position: absolute; top: -1999px; left: -1988px;">ShareThis Copy and Paste</div><form novalidate="novalidate" class="mktoForm mktoHasWidth mktoLayoutLeft" style="font-family: Helvetica, Arial, sans-serif; font-size: 13px; color: rgb(51, 51, 51); visibility: hidden; position: absolute; top: -500px; left: -1000px; width: 1200px;"></form><iframe name="mktoFormsXDIframe0.8162509921975722" id="MktoForms2XDIframe" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/XDFrame.html" style="display: none;"></iframe><div id="stwrapper" class="stwrapper stwrapper4x" style="display: none;"><iframe allowtransparency="true" id="stLframe" class="stLframe" name="stLframe" frameborder="0" scrolling="no" src="./An introduction to checkpointing in Apache Apex - DataTorrent_files/index.html"></iframe></div><div id="stOverlay" onclick="javascript:stWidget.closeWidget();"></div></body></html>
